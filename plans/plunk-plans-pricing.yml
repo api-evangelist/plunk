@@ -1,0 +1,124 @@
+specification: API Commons Plans
+specificationVersion: '0.1'
+schema: https://raw.githubusercontent.com/api-evangelist/interface-research/main/schema/api-commons.yml#/$defs/Plans
+provider: Plunk
+providerId: plunk
+created: '2026-06-20'
+modified: '2026-06-20'
+reconciled: true
+tags:
+- Email
+- Transactional Email
+- Marketing
+- Automation
+- Open Source
+- SaaS
+- Plans
+description: >-
+  Plunk offers a simple usage-based model on its hosted cloud: a Free Forever
+  tier that includes 1,000 emails per month (with Plunk branding, no credit
+  card required) and a Pay-as-you-grow tier billed at a flat $0.001 per email
+  with no base fee. Contacts are unlimited on both tiers. Because Plunk is
+  open-source under AGPL-3.0, the entire platform can also be self-hosted with
+  Docker Compose at no per-email cost, where the only spend is your own
+  infrastructure and outbound email provider.
+notes: >-
+  Cloud pricing as published on the Plunk pricing page; self-hosting is free of
+  Plunk fees but incurs your own hosting and SMTP/provider costs. Verify the
+  pricing page for current rates.
+sources:
+- https://www.useplunk.com/pricing
+- https://docs.useplunk.com
+- https://github.com/useplunk/plunk
+plans:
+- id: plunk-free
+  name: Free Forever
+  type: free
+  description: >-
+    Free hosted tier including 1,000 emails per month with unlimited contacts.
+    Messages carry Plunk branding. No credit card required.
+  entries:
+  - label: Included Emails
+    name: free_emails
+    type: included
+    metric: emails
+    limit: 1000
+    timeFrame: month
+    geo: global
+    unit: 1
+    price: free
+    userMultiplied: false
+  - label: Contacts
+    name: free_contacts
+    type: included
+    metric: contacts
+    limit: -1
+    timeFrame: month
+    geo: global
+    unit: 1
+    price: unlimited, free
+    userMultiplied: false
+  elements:
+  - name: Transactional Send
+  - name: Event Tracking
+  - name: Contacts
+  - name: Campaigns
+  - name: Automations
+- id: plunk-pay-as-you-grow
+  name: Pay as you grow
+  type: usage
+  description: >-
+    Usage-based hosted tier billed at a flat per-email rate with no base fee and
+    unlimited contacts.
+  entries:
+  - label: Email Sends
+    name: email_sends
+    type: usage
+    metric: emails
+    limit: -1
+    timeFrame: month
+    geo: global
+    unit: 1
+    price: $0.001 per email
+    userMultiplied: false
+  - label: Contacts
+    name: contacts
+    type: included
+    metric: contacts
+    limit: -1
+    timeFrame: month
+    geo: global
+    unit: 1
+    price: unlimited, included
+    userMultiplied: false
+  elements:
+  - name: Transactional Send
+  - name: Event Tracking
+  - name: Contacts
+  - name: Campaigns
+  - name: Automations
+- id: plunk-self-hosted
+  name: Self-Hosted (Open Source)
+  type: free
+  description: >-
+    The full Plunk platform is open-source under AGPL-3.0 and can be deployed
+    with Docker Compose. There are no Plunk per-email fees; you pay only for
+    your own infrastructure and outbound email provider.
+  entries:
+  - label: Plunk Software
+    name: self_hosted_software
+    type: flat
+    metric: license
+    limit: -1
+    timeFrame: month
+    geo: global
+    unit: 1
+    price: free (AGPL-3.0)
+    userMultiplied: false
+  elements:
+  - name: Full Platform
+  - name: Full Data Ownership
+  - name: No Per-Email Costs
+maintainers:
+- FN: Kin Lane
+  email: kin@apievangelist.com

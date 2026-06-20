@@ -1,0 +1,309 @@
+{
+  "info": {
+    "_postman_id": "b1f4c2a7-7d3e-4a91-9c2b-2f1a8e5d4c01",
+    "name": "Plunk API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "The Plunk REST API for the open-source email platform for SaaS: transactional send, event tracking for automations, contact management, and marketing campaigns. Base URL https://api.useplunk.com/v1. Bearer auth with a secret key (sk_) for most endpoints; the /track endpoint also accepts a public key (pk_).",
+      "type": "text/plain"
+    }
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "type": "string",
+      "value": "https://api.useplunk.com/v1",
+      "key": "baseUrl"
+    }
+  ],
+  "item": [
+    {
+      "name": "Transactional",
+      "item": [
+        {
+          "name": "Send a transactional email",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/send",
+              "host": ["{{baseUrl}}"],
+              "path": ["send"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to\": \"user@example.com\",\n  \"subject\": \"Welcome to our app\",\n  \"body\": \"<p>Thanks for signing up!</p>\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Sends a single transactional email using a secret API key."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "Track an event",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/track",
+              "host": ["{{baseUrl}}"],
+              "path": ["track"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"signed-up\",\n  \"email\": \"user@example.com\",\n  \"subscribed\": true,\n  \"data\": {\n    \"plan\": \"pro\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Publishes a contact event that triggers automations. Accepts a public (pk_) or secret key."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Contacts",
+      "item": [
+        {
+          "name": "List all contacts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/contacts",
+              "host": ["{{baseUrl}}"],
+              "path": ["contacts"]
+            },
+            "description": "Returns every contact in the project."
+          }
+        },
+        {
+          "name": "Get a contact",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/contacts/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["contacts", ":id"],
+              "variable": [{ "key": "id", "value": "contact_123" }]
+            },
+            "description": "Retrieves a single contact by id."
+          }
+        },
+        {
+          "name": "Count contacts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/contacts/count",
+              "host": ["{{baseUrl}}"],
+              "path": ["contacts", "count"]
+            },
+            "description": "Returns the total number of contacts."
+          }
+        },
+        {
+          "name": "Create a contact",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/contacts",
+              "host": ["{{baseUrl}}"],
+              "path": ["contacts"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"subscribed\": true,\n  \"data\": {\n    \"firstName\": \"John\",\n    \"plan\": \"pro\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Creates a new contact."
+          }
+        },
+        {
+          "name": "Update a contact",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/contacts",
+              "host": ["{{baseUrl}}"],
+              "path": ["contacts"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"contact_123\",\n  \"data\": {\n    \"plan\": \"enterprise\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Updates an existing contact."
+          }
+        },
+        {
+          "name": "Subscribe a contact",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/contacts/subscribe",
+              "host": ["{{baseUrl}}"],
+              "path": ["contacts", "subscribe"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"contact_123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Sets a contact's subscription state to subscribed."
+          }
+        },
+        {
+          "name": "Unsubscribe a contact",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/contacts/unsubscribe",
+              "host": ["{{baseUrl}}"],
+              "path": ["contacts", "unsubscribe"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"contact_123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Sets a contact's subscription state to unsubscribed."
+          }
+        },
+        {
+          "name": "Delete a contact",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/contacts",
+              "host": ["{{baseUrl}}"],
+              "path": ["contacts"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"contact_123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Permanently deletes a contact by id."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Campaigns",
+      "item": [
+        {
+          "name": "Create a campaign",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaigns",
+              "host": ["{{baseUrl}}"],
+              "path": ["campaigns"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"Product launch\",\n  \"body\": \"<p>We just shipped something new.</p>\",\n  \"recipients\": [\n    \"user@example.com\"\n  ],\n  \"style\": \"PLUNK\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Creates a one-off marketing campaign."
+          }
+        },
+        {
+          "name": "Update a campaign",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaigns",
+              "host": ["{{baseUrl}}"],
+              "path": ["campaigns"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"campaign_123\",\n  \"subject\": \"Product launch (updated)\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Updates an existing draft campaign."
+          }
+        },
+        {
+          "name": "Send a campaign",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaigns/send",
+              "host": ["{{baseUrl}}"],
+              "path": ["campaigns", "send"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"campaign_123\",\n  \"live\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Sends a previously created campaign to its recipients."
+          }
+        },
+        {
+          "name": "Delete a campaign",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaigns",
+              "host": ["{{baseUrl}}"],
+              "path": ["campaigns"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"campaign_123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Deletes a campaign by id."
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,245 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Plunk API",
+    "version": "1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Transactional",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Send a transactional email",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.useplunk.com/v1/send",
+            "body": {
+              "type": "json",
+              "data": "{\n  \"to\": \"user@example.com\",\n  \"subject\": \"Welcome to our app\",\n  \"body\": \"<p>Thanks for signing up!</p>\"\n}"
+            }
+          },
+          "docs": "Sends a single transactional email using a secret API key."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Events",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Track an event",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.useplunk.com/v1/track",
+            "body": {
+              "type": "json",
+              "data": "{\n  \"event\": \"signed-up\",\n  \"email\": \"user@example.com\",\n  \"subscribed\": true,\n  \"data\": { \"plan\": \"pro\" }\n}"
+            }
+          },
+          "docs": "Publishes a contact event that triggers automations. Accepts a public (pk_) or secret key."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Contacts",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List all contacts",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.useplunk.com/v1/contacts"
+          },
+          "docs": "Returns every contact in the project."
+        },
+        {
+          "info": {
+            "name": "Get a contact",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.useplunk.com/v1/contacts/:id"
+          },
+          "docs": "Retrieves a single contact by id."
+        },
+        {
+          "info": {
+            "name": "Count contacts",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.useplunk.com/v1/contacts/count"
+          },
+          "docs": "Returns the total number of contacts."
+        },
+        {
+          "info": {
+            "name": "Create a contact",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.useplunk.com/v1/contacts",
+            "body": {
+              "type": "json",
+              "data": "{\n  \"email\": \"user@example.com\",\n  \"subscribed\": true,\n  \"data\": { \"firstName\": \"John\", \"plan\": \"pro\" }\n}"
+            }
+          },
+          "docs": "Creates a new contact."
+        },
+        {
+          "info": {
+            "name": "Update a contact",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.useplunk.com/v1/contacts",
+            "body": {
+              "type": "json",
+              "data": "{\n  \"id\": \"contact_123\",\n  \"data\": { \"plan\": \"enterprise\" }\n}"
+            }
+          },
+          "docs": "Updates an existing contact."
+        },
+        {
+          "info": {
+            "name": "Subscribe a contact",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.useplunk.com/v1/contacts/subscribe",
+            "body": {
+              "type": "json",
+              "data": "{\n  \"id\": \"contact_123\"\n}"
+            }
+          },
+          "docs": "Sets a contact's subscription state to subscribed."
+        },
+        {
+          "info": {
+            "name": "Unsubscribe a contact",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.useplunk.com/v1/contacts/unsubscribe",
+            "body": {
+              "type": "json",
+              "data": "{\n  \"id\": \"contact_123\"\n}"
+            }
+          },
+          "docs": "Sets a contact's subscription state to unsubscribed."
+        },
+        {
+          "info": {
+            "name": "Delete a contact",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://api.useplunk.com/v1/contacts",
+            "body": {
+              "type": "json",
+              "data": "{\n  \"id\": \"contact_123\"\n}"
+            }
+          },
+          "docs": "Permanently deletes a contact by id."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Campaigns",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Create a campaign",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.useplunk.com/v1/campaigns",
+            "body": {
+              "type": "json",
+              "data": "{\n  \"subject\": \"Product launch\",\n  \"body\": \"<p>We just shipped something new.</p>\",\n  \"recipients\": [\"user@example.com\"],\n  \"style\": \"PLUNK\"\n}"
+            }
+          },
+          "docs": "Creates a one-off marketing campaign."
+        },
+        {
+          "info": {
+            "name": "Update a campaign",
+            "type": "http"
+          },
+          "http": {
+            "method": "PUT",
+            "url": "https://api.useplunk.com/v1/campaigns",
+            "body": {
+              "type": "json",
+              "data": "{\n  \"id\": \"campaign_123\",\n  \"subject\": \"Product launch (updated)\"\n}"
+            }
+          },
+          "docs": "Updates an existing draft campaign."
+        },
+        {
+          "info": {
+            "name": "Send a campaign",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.useplunk.com/v1/campaigns/send",
+            "body": {
+              "type": "json",
+              "data": "{\n  \"id\": \"campaign_123\",\n  \"live\": true\n}"
+            }
+          },
+          "docs": "Sends a previously created campaign to its recipients."
+        },
+        {
+          "info": {
+            "name": "Delete a campaign",
+            "type": "http"
+          },
+          "http": {
+            "method": "DELETE",
+            "url": "https://api.useplunk.com/v1/campaigns",
+            "body": {
+              "type": "json",
+              "data": "{\n  \"id\": \"campaign_123\"\n}"
+            }
+          },
+          "docs": "Deletes a campaign by id."
+        }
+      ]
+    }
+  ]
+}

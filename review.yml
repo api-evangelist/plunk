@@ -1,0 +1,77 @@
+aid: plunk
+name: Plunk
+review:
+  question: Does Plunk expose a documented public WebSocket or streaming API?
+  answer: false
+  date: '2026-06-20'
+  reviewer: API Evangelist
+  asyncapiSpecCreated: false
+  asyncapiScopeNote: |
+    Plunk exposes a conventional request/response REST API only. There is no
+    documented WebSocket (ws:// / wss://) surface and no HTTP Server-Sent
+    Events (SSE) streaming endpoint. Event-driven behavior in Plunk is handled
+    server-side: the POST /v1/track endpoint records contact events that
+    trigger automations, but the client interaction is an ordinary synchronous
+    HTTP POST, not a streaming transport. No AsyncAPI document was authored
+    because no streaming/eventing transport is exposed to API consumers.
+findings:
+  summary: |
+    Plunk is an open-source (AGPL-3.0) email platform for SaaS that exposes a
+    single REST API under https://api.useplunk.com/v1, authenticated with a
+    Bearer API key (secret sk_ for most routes; public pk_ additionally
+    accepted on /v1/track). The documented surface covers transactional send,
+    event tracking for automations, contact/subscriber management, and
+    marketing campaigns. Public /v1 routes return a wrapped envelope
+    ({"success": true, "data": ...}); dashboard-style resource routes return
+    resources directly. The same API is served by the hosted platform and by
+    self-hosted deployments. No realtime, bidirectional, or streaming transport
+    is documented.
+  transports:
+    - protocol: REST
+      scheme: https
+      baseURL: https://api.useplunk.com/v1
+      documented: true
+    - protocol: SSE
+      scheme: https
+      documented: false
+      note: No Server-Sent Events streaming endpoint is documented.
+    - protocol: WebSocket
+      scheme: wss
+      documented: false
+      note: No WebSocket endpoint is documented anywhere in the Plunk API reference or product pages as of the review date.
+  endpointsConfirmedRest:
+    - POST   https://api.useplunk.com/v1/send
+    - POST   https://api.useplunk.com/v1/track
+    - GET    https://api.useplunk.com/v1/contacts
+    - POST   https://api.useplunk.com/v1/contacts
+    - PUT    https://api.useplunk.com/v1/contacts
+    - DELETE https://api.useplunk.com/v1/contacts
+    - GET    https://api.useplunk.com/v1/contacts/{id}
+    - GET    https://api.useplunk.com/v1/contacts/count
+    - POST   https://api.useplunk.com/v1/contacts/subscribe
+    - POST   https://api.useplunk.com/v1/contacts/unsubscribe
+    - POST   https://api.useplunk.com/v1/campaigns
+    - PUT    https://api.useplunk.com/v1/campaigns
+    - DELETE https://api.useplunk.com/v1/campaigns
+    - POST   https://api.useplunk.com/v1/campaigns/send
+sources:
+  - url: https://docs.useplunk.com/api-reference/overview
+    type: APIReference
+    note: Lists base URL, Bearer secret/public key auth, response envelope, rate limits, and the send/track/contacts/campaigns endpoints. All HTTPS REST.
+  - url: https://docs.useplunk.com/api-reference/transactional/send
+    type: Documentation
+    note: Transactional send is a single POST; no streaming.
+  - url: https://www.useplunk.com/pricing
+    type: Documentation
+    note: Confirms hosted usage pricing and free self-hosting; no streaming product.
+  - url: https://github.com/useplunk/plunk
+    type: GitHub
+    note: Open-source (AGPL-3.0) monorepo for the platform; REST API only.
+actions:
+  asyncapiPath: null
+  apisYmlUpdated: true
+  reason: |
+    No WebSocket or SSE streaming transport exists. The API is a conventional
+    synchronous REST interface, so no AsyncAPI document was created. The
+    apis.yml catalog reflects the REST surface with OpenAPI, Postman, and Open
+    Collection artifacts.

@@ -1,0 +1,59 @@
+specification: API Commons Rate Limits
+specificationVersion: '0.1'
+schema: https://raw.githubusercontent.com/api-evangelist/interface-research/main/schema/api-commons.yml#/$defs/RateLimits
+provider: Plunk
+providerId: plunk
+created: '2026-06-20'
+modified: '2026-06-20'
+reconciled: false
+tags:
+- Email
+- Transactional Email
+- Marketing
+- Automation
+- Open Source
+- SaaS
+- Rate Limiting
+- Quotas
+- Throttling
+description: >-
+  The Plunk hosted API enforces a project-level rate limit of approximately
+  1,000 requests per minute. Email sending is additionally throttled per project
+  and bulk operations (such as large campaign sends) are automatically queued
+  rather than rejected. Requests that exceed the limit return HTTP 429.
+  Self-hosted deployments can configure their own limits.
+notes: >-
+  Documented hosted limits as of review; bulk sends are queued, not failed.
+  Self-hosted instances set their own throttling. Verify current values in the
+  Plunk API reference on reconciliation.
+sources:
+- https://docs.useplunk.com/api-reference/overview
+- https://www.useplunk.com/pricing
+responseCodes:
+  throttled: 429
+limits:
+- name: Requests Per Minute
+  scope: project
+  metric: requests
+  limit: ~1000 per minute
+  notes: Project-level API request rate limit on the hosted platform.
+- name: Email Sending Throttle
+  scope: project
+  metric: emails
+  limit: throttled per project
+  notes: Outbound send rate is throttled per project to protect deliverability.
+- name: Bulk Operations
+  scope: project
+  metric: jobs
+  limit: automatically queued
+  notes: Large campaign and bulk operations are queued rather than rejected.
+policies:
+- name: Queuing
+  description: Bulk sends and high-volume operations are queued and processed asynchronously instead of being rejected.
+- name: Backoff Strategy
+  description: Clients should implement exponential backoff with jitter and honor 429 responses.
+- name: Self-Hosted Configuration
+  description: Self-hosted deployments can configure their own rate limits and sending throughput.
+maintainers:
+- FN: Kin Lane
+  email: kin@apievangelist.com
