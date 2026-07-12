@@ -119,6 +119,10 @@ apis:
   description: Create, update, delete, and send one-off marketing campaigns to a list
     of recipients or audience segments, with HTML body and styling controls.
 common:
+- type: DomainSecurity
+  url: security/plunk-domain-security.yml
+- type: Authentication
+  url: authentication/plunk-authentication.yml
 - type: GitHubOrganization
   url: https://github.com/useplunk
 - type: LinkedIn
