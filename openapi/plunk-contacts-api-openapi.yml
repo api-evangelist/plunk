@@ -1,0 +1,335 @@
+openapi: 3.0.1
+info:
+  title: Plunk Campaigns Contacts API
+  description: 'The Plunk REST API for the open-source email platform for SaaS. Plunk unifies transactional email (send), event tracking for automations (track), contact / subscriber management, and marketing campaigns behind a single Bearer-authenticated API. Public API routes under /v1 return a wrapped envelope ({"success": true, "data": ...}); most routes require a secret key (sk_), while /v1/track may also be called with a public key (pk_) for client-side use. The same API is served by the hosted platform and by self-hosted (AGPL-3.0) deployments.'
+  termsOfService: https://www.useplunk.com/legal/terms
+  contact:
+    name: Plunk Support
+    url: https://docs.useplunk.com
+  license:
+    name: AGPL-3.0
+    url: https://github.com/useplunk/plunk/blob/main/LICENSE
+  version: '1.0'
+servers:
+- url: https://api.useplunk.com/v1
+  description: Plunk hosted API
+security:
+- bearerAuth: []
+tags:
+- name: Contacts
+  description: Manage contacts and their subscription state.
+paths:
+  /contacts:
+    get:
+      operationId: getContacts
+      tags:
+      - Contacts
+      summary: List all contacts
+      description: Returns every contact in the project.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: A list of contacts.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Contact'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      operationId: createContact
+      tags:
+      - Contacts
+      summary: Create a contact
+      description: Creates a new contact with an email address, an optional subscription state, and arbitrary metadata used for personalization and segmentation.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContactRequest'
+            example:
+              email: user@example.com
+              subscribed: true
+              data:
+                firstName: John
+                plan: pro
+      responses:
+        '200':
+          description: The created contact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    put:
+      operationId: updateContact
+      tags:
+      - Contacts
+      summary: Update a contact
+      description: Updates the subscription state and/or metadata of an existing contact.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContactRequest'
+            example:
+              id: contact_123
+              data:
+                plan: enterprise
+      responses:
+        '200':
+          description: The updated contact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: deleteContact
+      tags:
+      - Contacts
+      summary: Delete a contact
+      description: Permanently deletes a contact by id.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - id
+              properties:
+                id:
+                  type: string
+                  description: The id of the contact to delete.
+            example:
+              id: contact_123
+      responses:
+        '200':
+          description: The deleted contact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /contacts/{id}:
+    get:
+      operationId: getContact
+      tags:
+      - Contacts
+      summary: Get a contact
+      description: Retrieves a single contact by its id.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The id of the contact.
+      responses:
+        '200':
+          description: The requested contact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /contacts/count:
+    get:
+      operationId: getContactCount
+      tags:
+      - Contacts
+      summary: Count contacts
+      description: Returns the total number of contacts in the project.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: The contact count.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 4096
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /contacts/subscribe:
+    post:
+      operationId: subscribeContact
+      tags:
+      - Contacts
+      summary: Subscribe a contact
+      description: Sets a contact's subscription state to subscribed.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactSubscriptionRequest'
+            example:
+              id: contact_123
+      responses:
+        '200':
+          description: The updated contact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /contacts/unsubscribe:
+    post:
+      operationId: unsubscribeContact
+      tags:
+      - Contacts
+      summary: Unsubscribe a contact
+      description: Sets a contact's subscription state to unsubscribed.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactSubscriptionRequest'
+            example:
+              id: contact_123
+      responses:
+        '200':
+          description: The updated contact.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    ContactSubscriptionRequest:
+      type: object
+      required:
+      - id
+      properties:
+        id:
+          type: string
+          description: The id of the contact.
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        time:
+          type: integer
+    UpdateContactRequest:
+      type: object
+      required:
+      - id
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        subscribed:
+          type: boolean
+        data:
+          type: object
+          additionalProperties: true
+    CreateContactRequest:
+      type: object
+      required:
+      - email
+      properties:
+        email:
+          type: string
+          format: email
+        subscribed:
+          type: boolean
+          default: true
+        data:
+          type: object
+          additionalProperties: true
+    Contact:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        subscribed:
+          type: boolean
+        data:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+  responses:
+    ValidationError:
+      description: The request body failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: The requested resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Plunk API key passed as a Bearer token. Use a secret key (sk_) for most endpoints; the /track endpoint additionally accepts a public key (pk_).

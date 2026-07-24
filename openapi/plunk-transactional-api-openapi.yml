@@ -1,0 +1,170 @@
+openapi: 3.0.1
+info:
+  title: Plunk Campaigns Transactional API
+  description: 'The Plunk REST API for the open-source email platform for SaaS. Plunk unifies transactional email (send), event tracking for automations (track), contact / subscriber management, and marketing campaigns behind a single Bearer-authenticated API. Public API routes under /v1 return a wrapped envelope ({"success": true, "data": ...}); most routes require a secret key (sk_), while /v1/track may also be called with a public key (pk_) for client-side use. The same API is served by the hosted platform and by self-hosted (AGPL-3.0) deployments.'
+  termsOfService: https://www.useplunk.com/legal/terms
+  contact:
+    name: Plunk Support
+    url: https://docs.useplunk.com
+  license:
+    name: AGPL-3.0
+    url: https://github.com/useplunk/plunk/blob/main/LICENSE
+  version: '1.0'
+servers:
+- url: https://api.useplunk.com/v1
+  description: Plunk hosted API
+security:
+- bearerAuth: []
+tags:
+- name: Transactional
+  description: Send transactional email.
+paths:
+  /send:
+    post:
+      operationId: sendEmail
+      tags:
+      - Transactional
+      summary: Send a transactional email
+      description: Sends a single transactional email to one or more recipients using a secret API key. The body may be HTML or plain text. Optional fields allow overriding the sender, reply-to, custom headers, and attachments.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendEmailRequest'
+            example:
+              to: user@example.com
+              subject: Welcome to our app
+              body: <p>Thanks for signing up!</p>
+      responses:
+        '200':
+          description: Email accepted for delivery.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendEmailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+components:
+  schemas:
+    SendEmailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        emails:
+          type: array
+          items:
+            type: object
+            properties:
+              contact:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  email:
+                    type: string
+              email:
+                type: string
+        timestamp:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        time:
+          type: integer
+    SendEmailRequest:
+      type: object
+      required:
+      - to
+      - subject
+      - body
+      properties:
+        to:
+          description: Recipient email address, or an array of addresses.
+          oneOf:
+          - type: string
+            format: email
+          - type: array
+            items:
+              type: string
+              format: email
+        subject:
+          type: string
+          description: Email subject line.
+        body:
+          type: string
+          description: Email body, as HTML or plain text.
+        subscribed:
+          type: boolean
+          description: Whether the recipient is treated as a subscribed contact.
+        name:
+          type: string
+          description: Display name to send from.
+        from:
+          type: string
+          format: email
+          description: Sender email address (must be a verified sender).
+        reply:
+          type: string
+          format: email
+          description: Reply-to email address.
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          description: Custom email headers.
+        attachments:
+          type: array
+          description: File attachments.
+          items:
+            type: object
+            properties:
+              filename:
+                type: string
+              content:
+                type: string
+                description: Base64-encoded file content.
+              type:
+                type: string
+                description: MIME type of the attachment.
+  responses:
+    ValidationError:
+      description: The request body failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimited:
+      description: Too many requests; the project rate limit was exceeded.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Plunk API key passed as a Bearer token. Use a secret key (sk_) for most endpoints; the /track endpoint additionally accepts a public key (pk_).

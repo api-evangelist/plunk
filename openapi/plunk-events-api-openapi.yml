@@ -1,0 +1,129 @@
+openapi: 3.0.1
+info:
+  title: Plunk Campaigns Events API
+  description: 'The Plunk REST API for the open-source email platform for SaaS. Plunk unifies transactional email (send), event tracking for automations (track), contact / subscriber management, and marketing campaigns behind a single Bearer-authenticated API. Public API routes under /v1 return a wrapped envelope ({"success": true, "data": ...}); most routes require a secret key (sk_), while /v1/track may also be called with a public key (pk_) for client-side use. The same API is served by the hosted platform and by self-hosted (AGPL-3.0) deployments.'
+  termsOfService: https://www.useplunk.com/legal/terms
+  contact:
+    name: Plunk Support
+    url: https://docs.useplunk.com
+  license:
+    name: AGPL-3.0
+    url: https://github.com/useplunk/plunk/blob/main/LICENSE
+  version: '1.0'
+servers:
+- url: https://api.useplunk.com/v1
+  description: Plunk hosted API
+security:
+- bearerAuth: []
+tags:
+- name: Events
+  description: Track contact events that drive automations.
+paths:
+  /track:
+    post:
+      operationId: trackEvent
+      tags:
+      - Events
+      summary: Track a contact event
+      description: Publishes a named event for a contact. If the contact does not exist it is created. Events trigger any matching automation. This endpoint may be called with either a public key (pk_) for safe client-side use or a secret key.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrackEventRequest'
+            example:
+              event: signed-up
+              email: user@example.com
+              subscribed: true
+              data:
+                plan: pro
+      responses:
+        '200':
+          description: Event recorded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackEventResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        time:
+          type: integer
+    TrackEventRequest:
+      type: object
+      required:
+      - event
+      - email
+      properties:
+        event:
+          type: string
+          description: The name of the event (e.g. "signed-up").
+        email:
+          type: string
+          format: email
+          description: The contact's email address.
+        subscribed:
+          type: boolean
+          description: Sets the subscription state of the contact.
+        data:
+          type: object
+          additionalProperties: true
+          description: Arbitrary metadata stored on the contact.
+    TrackEventResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        contact:
+          type: string
+          description: The id of the contact.
+        event:
+          type: string
+          description: The id of the recorded event.
+        timestamp:
+          type: string
+          format: date-time
+  responses:
+    ValidationError:
+      description: The request body failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimited:
+      description: Too many requests; the project rate limit was exceeded.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Plunk API key passed as a Bearer token. Use a secret key (sk_) for most endpoints; the /track endpoint additionally accepts a public key (pk_).

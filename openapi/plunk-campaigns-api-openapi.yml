@@ -1,0 +1,261 @@
+openapi: 3.0.1
+info:
+  title: Plunk Campaigns API
+  description: 'The Plunk REST API for the open-source email platform for SaaS. Plunk unifies transactional email (send), event tracking for automations (track), contact / subscriber management, and marketing campaigns behind a single Bearer-authenticated API. Public API routes under /v1 return a wrapped envelope ({"success": true, "data": ...}); most routes require a secret key (sk_), while /v1/track may also be called with a public key (pk_) for client-side use. The same API is served by the hosted platform and by self-hosted (AGPL-3.0) deployments.'
+  termsOfService: https://www.useplunk.com/legal/terms
+  contact:
+    name: Plunk Support
+    url: https://docs.useplunk.com
+  license:
+    name: AGPL-3.0
+    url: https://github.com/useplunk/plunk/blob/main/LICENSE
+  version: '1.0'
+servers:
+- url: https://api.useplunk.com/v1
+  description: Plunk hosted API
+security:
+- bearerAuth: []
+tags:
+- name: Campaigns
+  description: Create and send marketing campaigns.
+paths:
+  /campaigns:
+    post:
+      operationId: createCampaign
+      tags:
+      - Campaigns
+      summary: Create a campaign
+      description: Creates a one-off marketing campaign with a subject, HTML body, optional styling, and an explicit list of recipients.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCampaignRequest'
+            example:
+              subject: Product launch
+              body: <p>We just shipped something new.</p>
+              recipients:
+              - user@example.com
+              style: PLUNK
+      responses:
+        '200':
+          description: The created campaign.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Campaign'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    put:
+      operationId: updateCampaign
+      tags:
+      - Campaigns
+      summary: Update a campaign
+      description: Updates an existing draft campaign.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCampaignRequest'
+      responses:
+        '200':
+          description: The updated campaign.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Campaign'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      operationId: deleteCampaign
+      tags:
+      - Campaigns
+      summary: Delete a campaign
+      description: Deletes a campaign by id.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - id
+              properties:
+                id:
+                  type: string
+            example:
+              id: campaign_123
+      responses:
+        '200':
+          description: The deleted campaign.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Campaign'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /campaigns/send:
+    post:
+      operationId: sendCampaign
+      tags:
+      - Campaigns
+      summary: Send a campaign
+      description: Delivers a previously created campaign to its recipients, optionally at a scheduled time.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendCampaignRequest'
+            example:
+              id: campaign_123
+              live: true
+      responses:
+        '200':
+          description: The campaign that was sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Campaign'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        time:
+          type: integer
+    Campaign:
+      type: object
+      properties:
+        id:
+          type: string
+        subject:
+          type: string
+        body:
+          type: string
+        status:
+          type: string
+          enum:
+          - DRAFT
+          - SENT
+        style:
+          type: string
+        recipients:
+          type: array
+          items:
+            type: string
+        projectId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateCampaignRequest:
+      type: object
+      required:
+      - subject
+      - body
+      - recipients
+      properties:
+        subject:
+          type: string
+        body:
+          type: string
+        recipients:
+          type: array
+          items:
+            type: string
+            format: email
+        style:
+          type: string
+          description: Email styling preset (e.g. PLUNK or HTML).
+          enum:
+          - PLUNK
+          - HTML
+    UpdateCampaignRequest:
+      type: object
+      required:
+      - id
+      properties:
+        id:
+          type: string
+        subject:
+          type: string
+        body:
+          type: string
+        recipients:
+          type: array
+          items:
+            type: string
+            format: email
+        style:
+          type: string
+    SendCampaignRequest:
+      type: object
+      required:
+      - id
+      properties:
+        id:
+          type: string
+          description: The id of the campaign to send.
+        live:
+          type: boolean
+          description: When true the campaign is sent for real; when false a test send is performed.
+        delay:
+          type: integer
+          description: Optional delay in minutes before sending.
+  responses:
+    ValidationError:
+      description: The request body failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: The requested resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Plunk API key passed as a Bearer token. Use a secret key (sk_) for most endpoints; the /track endpoint additionally accepts a public key (pk_).
