@@ -7,7 +7,20 @@ description: Plunk is an open-source (AGPL-3.0) email platform for SaaS that uni
   single REST API. The hosted service runs at api.useplunk.com with Bearer secret /
   public API keys, and the entire stack can be self-hosted with Docker Compose for
   full data ownership and no per-email costs.
-image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+accessModel:
+  pricing: freemium
+  onboarding: open
+  trial: false
+  try_now: true
+  public: true
+  label: Freemium · Open access
+  confidence: high
+  source:
+  - plans
+  - authentication
+  generated: '2026-07-22'
+  method: derived
+image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/icons/plunk.png
 tags:
 - Email
 - Transactional Email
@@ -19,105 +32,110 @@ created: '2026-06-20'
 modified: '2026-06-20'
 specificationVersion: '0.19'
 apis:
-- aid: plunk:plunk-send-transactional-api
-  name: Plunk Send (Transactional) API
-  tags:
-  - Email
-  - Transactional
-  - Send
-  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
-  humanURL: https://docs.useplunk.com/api-reference/transactional/send
-  baseURL: https://api.useplunk.com/v1
-  properties:
-  - url: https://docs.useplunk.com/api-reference/transactional/send
-    type: Documentation
-  - url: https://docs.useplunk.com/api-reference/overview
-    type: APIReference
-  - url: openapi/plunk-openapi.yml
-    type: OpenAPI
-  - url: collections/plunk.postman_collection.json
-    type: PostmanCollection
-  - url: collections/plunk.opencollection.json
-    type: OpenCollection
-  - url: https://github.com/useplunk/plunk
-    type: GitHub
-  description: Send a single transactional email (HTML or plain-text body) authenticated
-    with a secret API key, with optional sender, reply-to, custom headers, and
-    attachments.
-- aid: plunk:plunk-track-events-api
-  name: Plunk Track (Events) API
-  tags:
-  - Events
-  - Tracking
-  - Automation
-  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
-  humanURL: https://docs.useplunk.com/api-reference/transactional/track
-  baseURL: https://api.useplunk.com/v1
-  properties:
-  - url: https://docs.useplunk.com/api-reference/transactional/track
-    type: Documentation
-  - url: https://docs.useplunk.com/api-reference/overview
-    type: APIReference
-  - url: openapi/plunk-openapi.yml
-    type: OpenAPI
-  - url: collections/plunk.postman_collection.json
-    type: PostmanCollection
-  - url: collections/plunk.opencollection.json
-    type: OpenCollection
-  - url: https://github.com/useplunk/plunk
-    type: GitHub
-  description: Publish a named contact event that creates or updates the contact and
-    triggers any matching automation. Callable with a public (pk_) key for safe
-    client-side tracking, optionally carrying subscription status and metadata.
-- aid: plunk:plunk-contacts-api
-  name: Plunk Contacts API
-  tags:
-  - Contacts
-  - Subscribers
-  - Audience
-  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
-  humanURL: https://docs.useplunk.com/api-reference/contacts/create
-  baseURL: https://api.useplunk.com/v1
-  properties:
-  - url: https://docs.useplunk.com/api-reference/contacts/create
-    type: Documentation
-  - url: https://docs.useplunk.com/api-reference/overview
-    type: APIReference
-  - url: openapi/plunk-openapi.yml
-    type: OpenAPI
-  - url: collections/plunk.postman_collection.json
-    type: PostmanCollection
-  - url: collections/plunk.opencollection.json
-    type: OpenCollection
-  - url: https://github.com/useplunk/plunk
-    type: GitHub
-  description: Create, retrieve, update, count, and delete contacts, and manage
-    subscription state with explicit subscribe / unsubscribe operations. Contacts
-    carry arbitrary metadata used for segmentation and personalization.
 - aid: plunk:plunk-campaigns-api
   name: Plunk Campaigns API
+  description: Create and send marketing campaigns.
+  humanURL: https://docs.useplunk.com/api-reference/transactional/send
+  baseURL: https://api.useplunk.com/v1
   tags:
   - Campaigns
-  - Marketing
-  - Broadcast
-  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
-  humanURL: https://docs.useplunk.com/api-reference/campaigns/create
-  baseURL: https://api.useplunk.com/v1
   properties:
-  - url: https://docs.useplunk.com/api-reference/campaigns/create
-    type: Documentation
-  - url: https://docs.useplunk.com/api-reference/overview
-    type: APIReference
-  - url: openapi/plunk-openapi.yml
-    type: OpenAPI
-  - url: collections/plunk.postman_collection.json
-    type: PostmanCollection
-  - url: collections/plunk.opencollection.json
-    type: OpenCollection
-  - url: https://github.com/useplunk/plunk
-    type: GitHub
-  description: Create, update, delete, and send one-off marketing campaigns to a list
-    of recipients or audience segments, with HTML body and styling controls.
+  - type: OpenAPI
+    url: openapi/plunk-campaigns-api-openapi.yml
+  - type: Documentation
+    url: https://docs.useplunk.com/api-reference/transactional/send
+  - type: APIReference
+    url: https://docs.useplunk.com/api-reference/overview
+  - type: PostmanCollection
+    url: collections/plunk.postman_collection.json
+  - type: OpenCollection
+    url: collections/plunk.opencollection.json
+  - type: GitHub
+    url: https://github.com/useplunk/plunk
+  - type: Documentation
+    url: https://docs.useplunk.com/api-reference/transactional/track
+  - type: Documentation
+    url: https://docs.useplunk.com/api-reference/contacts/create
+  - type: Documentation
+    url: https://docs.useplunk.com/api-reference/campaigns/create
+- aid: plunk:plunk-contacts-api
+  name: Plunk Contacts API
+  description: Manage contacts and their subscription state.
+  humanURL: https://docs.useplunk.com/api-reference/transactional/send
+  baseURL: https://api.useplunk.com/v1
+  tags:
+  - Contacts
+  properties:
+  - type: OpenAPI
+    url: openapi/plunk-contacts-api-openapi.yml
+  - type: Documentation
+    url: https://docs.useplunk.com/api-reference/transactional/send
+  - type: APIReference
+    url: https://docs.useplunk.com/api-reference/overview
+  - type: PostmanCollection
+    url: collections/plunk.postman_collection.json
+  - type: OpenCollection
+    url: collections/plunk.opencollection.json
+  - type: GitHub
+    url: https://github.com/useplunk/plunk
+  - type: Documentation
+    url: https://docs.useplunk.com/api-reference/transactional/track
+  - type: Documentation
+    url: https://docs.useplunk.com/api-reference/contacts/create
+  - type: Documentation
+    url: https://docs.useplunk.com/api-reference/campaigns/create
+- aid: plunk:plunk-events-api
+  name: Plunk Events API
+  description: Track contact events that drive automations.
+  humanURL: https://docs.useplunk.com/api-reference/transactional/send
+  baseURL: https://api.useplunk.com/v1
+  tags:
+  - Events
+  properties:
+  - type: OpenAPI
+    url: openapi/plunk-events-api-openapi.yml
+  - type: Documentation
+    url: https://docs.useplunk.com/api-reference/transactional/send
+  - type: APIReference
+    url: https://docs.useplunk.com/api-reference/overview
+  - type: PostmanCollection
+    url: collections/plunk.postman_collection.json
+  - type: OpenCollection
+    url: collections/plunk.opencollection.json
+  - type: GitHub
+    url: https://github.com/useplunk/plunk
+  - type: Documentation
+    url: https://docs.useplunk.com/api-reference/transactional/track
+  - type: Documentation
+    url: https://docs.useplunk.com/api-reference/contacts/create
+  - type: Documentation
+    url: https://docs.useplunk.com/api-reference/campaigns/create
+- aid: plunk:plunk-transactional-api
+  name: Plunk Transactional API
+  description: Send transactional email.
+  humanURL: https://docs.useplunk.com/api-reference/transactional/send
+  baseURL: https://api.useplunk.com/v1
+  tags:
+  - Transactional
+  properties:
+  - type: OpenAPI
+    url: openapi/plunk-transactional-api-openapi.yml
+  - type: Documentation
+    url: https://docs.useplunk.com/api-reference/transactional/send
+  - type: APIReference
+    url: https://docs.useplunk.com/api-reference/overview
+  - type: PostmanCollection
+    url: collections/plunk.postman_collection.json
+  - type: OpenCollection
+    url: collections/plunk.opencollection.json
+  - type: GitHub
+    url: https://github.com/useplunk/plunk
+  - type: Documentation
+    url: https://docs.useplunk.com/api-reference/transactional/track
+  - type: Documentation
+    url: https://docs.useplunk.com/api-reference/contacts/create
+  - type: Documentation
+    url: https://docs.useplunk.com/api-reference/campaigns/create
 common:
 - type: AgenticAccess
   url: agentic-access/plunk-agentic-access.yml
