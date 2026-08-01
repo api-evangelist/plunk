@@ -1,0 +1,20 @@
+{
+  "provider": "plunk",
+  "sources": [
+    "plunk-campaigns-api-openapi.yml",
+    "plunk-contacts-api-openapi.yml",
+    "plunk-events-api-openapi.yml",
+    "plunk-transactional-api-openapi.yml"
+  ],
+  "outputs": [
+    "plunk-campaigns-api-openapi.yml",
+    "plunk-contacts-api-openapi.yml",
+    "plunk-events-api-openapi.yml",
+    "plunk-transactional-api-openapi.yml"
+  ],
+  "archived": [],
+  "errors": [],
+  "warnings": [],
+  "notes": [],
+  "skipped": []
+}
