@@ -2,11 +2,16 @@ aid: plunk
 url: https://raw.githubusercontent.com/api-evangelist/plunk/refs/heads/main/apis.yml
 name: Plunk
 kind: company
-description: Plunk is an open-source (AGPL-3.0) email platform for SaaS that unifies
-  transactional email, marketing campaigns, and event-driven automations behind a
-  single REST API. The hosted service runs at api.useplunk.com with Bearer secret /
-  public API keys, and the entire stack can be self-hosted with Docker Compose for
-  full data ownership and no per-email costs.
+description: Plunk is an open-source (AGPL-3.0) email platform for developers that unifies
+  transactional email, marketing campaigns, contact segmentation and event-driven workflow
+  automation behind a single REST API. It publishes its own OpenAPI 3.1.0 at
+  docs.useplunk.com/openapi.json, declaring next-api.useplunk.com as the production base URL,
+  and authenticates with a two-class Bearer API key where the prefix decides capability — sk_
+  for every endpoint and pk_ for the client-safe /v1/track tracking call. The API supports
+  Idempotency-Key on both public write endpoints, cursor pagination, a structured error
+  envelope carrying machine codes plus remediation hints, and a documented webhook event
+  catalogue delivered as workflow steps. Every documentation page is also served as Markdown.
+  The entire stack self-hosts with Docker Compose for full data ownership and no per-email costs.
 accessModel:
   pricing: freemium
   onboarding: open
@@ -28,10 +33,59 @@ tags:
 - Automation
 - Open Source
 - SaaS
+- Email API
+- Webhooks
+- Segmentation
+- Workflow Automation
+- Self-Hosted
+- Developer Tools
 created: '2026-06-20'
-modified: '2026-06-20'
+modified: '2026-08-13'
 specificationVersion: '0.19'
 apis:
+- aid: plunk:plunk-api
+  name: Plunk API
+  description: >-
+    Plunk's own published OpenAPI 3.1.0, served at https://docs.useplunk.com/openapi.json
+    and declaring https://next-api.useplunk.com as the production base URL. Covers the
+    public API (transactional send, event tracking, email verification) plus the contacts,
+    templates, campaigns and segments resources. Authenticated with a Bearer API key whose
+    prefix decides its capability — sk_ for every endpoint except POST /v1/track, which
+    requires pk_. POST /v1/send and POST /v1/track accept an Idempotency-Key header. Lists
+    are cursor paginated. This is the first-party contract; the four hand-authored specs
+    below predate it and cover the older api.useplunk.com surface.
+  humanURL: https://docs.useplunk.com/api-reference/overview
+  baseURL: https://next-api.useplunk.com
+  tags:
+  - Email
+  - Transactional
+  - Contacts
+  - Campaigns
+  - Segments
+  - Templates
+  properties:
+  - type: OpenAPI
+    url: openapi/_original/plunk-api-openapi.json
+  - type: Overlay
+    url: overlays/plunk-api-overlay.yaml
+  - type: Documentation
+    url: https://docs.useplunk.com/api-reference/overview
+  - type: APIReference
+    url: https://docs.useplunk.com/api-reference/overview
+  - type: Authentication
+    url: https://docs.useplunk.com/guides/api-keys
+  - type: Idempotency
+    url: https://docs.useplunk.com/guides/idempotency
+  - type: ErrorCatalog
+    url: https://docs.useplunk.com/api-reference/errors
+  - type: Webhooks
+    url: https://docs.useplunk.com/guides/webhooks
+  - type: DataModel
+    url: data-model/plunk-data-model.yml
+  - type: AgentSkill
+    url: skills/_index.yml
+  - type: GitHub
+    url: https://github.com/useplunk/plunk
 - aid: plunk:plunk-campaigns-api
   name: Plunk Campaigns API
   description: Create and send marketing campaigns.
@@ -157,6 +211,61 @@ common:
   url: rate-limits/plunk-rate-limits.yml
 - type: FinOps
   url: finops/plunk-finops.yml
+- type: Packages
+  url: packages/plunk-packages.yml
+- type: SDKs
+  url: packages/plunk-packages.yml
+- type: LLMsTxt
+  url: llms/plunk-llms.txt
+- type: Overlay
+  url: overlays/plunk-api-overlay.yaml
+- type: Conventions
+  url: conventions/plunk-conventions.yml
+- type: Idempotency
+  url: conventions/plunk-conventions.yml
+- type: ErrorCatalog
+  url: errors/plunk-problem-types.yml
+- type: Lifecycle
+  url: lifecycle/plunk-lifecycle.yml
+- type: StatusPage
+  url: https://status.useplunk.com
+- type: ChangeLog
+  url: changelog/plunk-changelog.yml
+- type: DataModel
+  url: data-model/plunk-data-model.yml
+- type: Webhooks
+  url: asyncapi/plunk-webhooks.yml
+- type: AgentSkill
+  url: skills/_index.yml
+- type: Conformance
+  url: conformance/plunk-conformance.yml
+- type: Compliance
+  url: https://www.useplunk.com/dpa
+- type: DeveloperPortal
+  url: https://docs.useplunk.com
+- type: APIReference
+  url: https://docs.useplunk.com/api-reference/overview
+- type: GettingStarted
+  url: https://docs.useplunk.com
+- type: Support
+  url: https://www.useplunk.com/discord
+- type: Pricing
+  url: https://www.useplunk.com/pricing
+- type: SignUp
+  url: https://next-app.useplunk.com/auth/signup
+- type: Login
+  url: https://next-app.useplunk.com/auth/login
+- type: TermsOfService
+  url: https://www.useplunk.com/terms
+- type: PrivacyPolicy
+  url: https://www.useplunk.com/privacy
+- type: SourceCode
+  url: https://github.com/useplunk/plunk
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
+x-enrichment:
+  date: '2026-08-13'
+  status: enriched
+  artifacts_added: 19
+  pass: local-v1
