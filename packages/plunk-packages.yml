@@ -1,0 +1,117 @@
+generated: '2026-08-13'
+method: searched
+source: >-
+  npm registry metadata (registry.npmjs.org), PyPI, the useplunk GitHub
+  organization, and https://docs.useplunk.com/api-reference/overview
+note: >-
+  Plunk ships exactly one first-party client library, @plunk/node, from
+  github.com/useplunk/node. Its last publish (3.0.3, 2024-10-15) predates the
+  rewritten API this repo now profiles: the current API reference documents
+  https://next-api.useplunk.com, cursor pagination, an Idempotency-Key header,
+  templates/segments/workflows resources and a structured error envelope, none
+  of which the SDK was released against. The docs no longer show an SDK install
+  anywhere — the "Client libraries" section of the API reference is raw fetch /
+  requests / curl snippets only. Treat the official SDK as unmaintained relative
+  to the live contract. The pricing page's claim of "SDKs for Node.js, Python,
+  and more" is not substantiated by any published first-party Python package.
+packages:
+- language: javascript
+  registry: npm
+  name: "@plunk/node"
+  url: https://www.npmjs.com/package/@plunk/node
+  install: npm install @plunk/node
+  official: true
+  version: 3.0.3
+  published: '2024-10-15'
+  repository: https://github.com/useplunk/node
+  description: Official Node.js library for useplunk.com
+  releases: 18
+  status: stale
+  note: >-
+    Last publish 2024-10-15, ~22 months before this pass. The upstream repo
+    github.com/useplunk/node was last pushed the same day. Written against the
+    older api.useplunk.com surface; does not expose Idempotency-Key, cursor
+    pagination, templates, segments or workflows.
+- language: python
+  registry: pypi
+  name: null
+  official: false
+  version: null
+  published: null
+  note: >-
+    Checked and absent. No first-party Plunk package is published to PyPI. The
+    PyPI project literally named "plunk" (0.3.1, 2025-11-14) is an unrelated
+    utility package by Thor Whalen (github.com/thorwhalen/plunk) and is NOT
+    Plunk the email platform — do not link it.
+community_packages:
+- language: javascript
+  registry: npm
+  name: "@upyo/plunk"
+  url: https://www.npmjs.com/package/@upyo/plunk
+  official: false
+  version: 0.5.1
+  published: '2026-07-16'
+  repository: https://github.com/dahlia/upyo
+  description: Plunk transport for the Upyo email library
+- language: javascript
+  registry: npm
+  name: plunk-node-sdk
+  url: https://www.npmjs.com/package/plunk-node-sdk
+  official: false
+  version: 0.3.0
+  published: '2026-07-22'
+  repository: https://github.com/magictm/plunk-node-sdk
+  description: Zero-dependency Node.js (>=18) SDK for the Plunk API
+- language: javascript
+  registry: npm
+  name: "@uninspired/plunk-client"
+  url: https://www.npmjs.com/package/@uninspired/plunk-client
+  official: false
+  version: 0.0.7
+  published: '2026-07-23'
+  repository: https://github.com/UninspiredStudio/plunk-api-client
+  description: JS client for the Plunk HTTP API
+- language: javascript
+  registry: npm
+  name: "@ignytehq/plunk-mcp"
+  url: https://www.npmjs.com/package/@ignytehq/plunk-mcp
+  official: false
+  version: 1.2.0
+  published: '2026-07-03'
+  repository: https://github.com/ignytehq/plunk-mcp
+  description: >-
+    Unofficial MCP server for Plunk. Self-described as unofficial; see
+    mcp/plunk-mcp.yml.
+- language: javascript
+  registry: npm
+  name: "@piksail/strapi-provider-email-plunk"
+  url: https://www.npmjs.com/package/@piksail/strapi-provider-email-plunk
+  official: false
+  version: 1.0.4
+  published: '2025-07-15'
+  description: Plunk provider for Strapi email
+- language: javascript
+  registry: npm
+  name: "@activepieces/piece-plunk"
+  url: https://www.npmjs.com/package/@activepieces/piece-plunk
+  official: false
+  version: 0.0.5
+  published: '2026-08-04'
+  description: Activepieces integration piece for Plunk
+distribution_other:
+- kind: container
+  name: Plunk self-hosted (Docker Compose)
+  url: https://docs.useplunk.com/self-hosting/docker
+  official: true
+  version: null
+  published: null
+  note: >-
+    The whole AGPL-3.0 platform ships as a Docker Compose deployment rather than
+    a versioned registry artifact tied to a client SDK. Platform releases are
+    tagged on GitHub (v0.13.0, 2026-08-09) — see changelog/plunk-changelog.yml.
+summary:
+  official_count: 1
+  official_languages: [javascript]
+  community_count: 6
+  newest_official_release: '2024-10-15'
+  newest_platform_release: '2026-08-09'

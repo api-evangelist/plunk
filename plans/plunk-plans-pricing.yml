@@ -4,7 +4,11 @@ schema: https://raw.githubusercontent.com/api-evangelist/interface-research/main
 provider: Plunk
 providerId: plunk
 created: '2026-06-20'
-modified: '2026-06-20'
+modified: '2026-08-13'
+generated: '2026-08-13'
+method: searched
+source: https://www.useplunk.com/pricing
+plan_count: 3
 reconciled: true
 tags:
 - Email
@@ -24,12 +28,64 @@ description: >-
   infrastructure and outbound email provider.
 notes: >-
   Cloud pricing as published on the Plunk pricing page; self-hosting is free of
-  Plunk fees but incurs your own hosting and SMTP/provider costs. Verify the
-  pricing page for current rates.
+  Plunk fees but incurs your own hosting and SMTP/provider costs. Re-verified
+  2026-08-13 against https://www.useplunk.com/pricing.md and the billing
+  concept page — rates unchanged, but the metering, activation charges and
+  per-category caps below were not captured on the previous pass.
 sources:
 - https://www.useplunk.com/pricing
-- https://docs.useplunk.com
+- https://www.useplunk.com/pricing.md
+- https://docs.useplunk.com/concepts/billing
 - https://github.com/useplunk/plunk
+metering:
+  unit: email
+  docs: https://docs.useplunk.com/concepts/billing
+  rules:
+  - {source: 'Transactional sends (/v1/send)', cost: 1 credit per recipient}
+  - {source: Campaigns, cost: 1 credit per recipient}
+  - {source: Workflow SEND_EMAIL steps, cost: 1 credit per send}
+  - {source: Inbound emails received at a verified domain, cost: 1 credit per received email}
+  - {source: Emails carrying one or more attachments, cost: 2 credits per email, note: Doubles regardless of attachment size — 100 KB and 10 MB cost the same.}
+  note: >-
+    Marketing, transactional, workflow and INBOUND email all count against one
+    monthly total. Inbound counting toward the allowance is easy to miss and
+    matters for anyone using the receiving-emails feature.
+activation_charges:
+  note: >-
+    Activating a paid subscription places two charges of 1.00 in the billing
+    currency. Both are credited back to the account balance in full and applied
+    against usage before any invoice, so activation costs nothing net.
+  charges:
+  - {name: Onboarding fee, when: at checkout, purpose: One-time fee supporting Plunk development}
+  - {name: Card verification, when: immediately after checkout, purpose: Confirms the card accepts automatic monthly billing}
+  failure_behavior: >-
+    If the verification charge is declined, the onboarding fee is refunded in
+    full and the subscription is cancelled. Most common with prepaid, virtual
+    and single-use cards.
+spend_controls:
+  per_category_caps: [Transactional, Campaigns, Workflows, Inbound]
+  console: Settings -> Billing -> Limits
+  api:
+  - "GET /users/@me/projects/{id}/billing-limits"
+  - "PUT /users/@me/projects/{id}/billing-limits"
+  - "GET /users/@me/projects/{id}/billing-consumption"
+  - "GET /users/@me/projects/{id}/billing-invoices"
+  exhaustion_behavior:
+    outbound: 402 Payment Required with error code BILLING_LIMIT_EXCEEDED
+    inbound: >-
+      Inbound emails are DROPPED SILENTLY for the affected project until the cap
+      resets. They are not queued and not replayed.
+    reset: start of each billing period
+  note: >-
+    Caps are independent and optional. Their purpose is to keep transactional
+    capacity available even if a campaign over-sends.
+payment_processor: Stripe
+tiering:
+  feature_gating: none
+  feature_gating_note: >-
+    Plunk publishes no feature tiers, add-ons or enterprise plan. Every feature
+    is on every plan; the paid tier removes Plunk branding and lifts the 1,000
+    email allowance. There is no "contact sales" surface and no published SLA.
 plans:
 - id: plunk-free
   name: Free Forever

@@ -1,5 +1,24 @@
 aid: plunk
 name: Plunk
+amended:
+  date: '2026-08-13'
+  by: API Evangelist enrichment pipeline
+  note: >-
+    The 2026-06-20 review below stands on its narrow question — Plunk still
+    exposes no WebSocket and no Server-Sent Events endpoint, and still publishes
+    no AsyncAPI document. But its wider framing ("event-driven behavior is
+    handled server-side" with no consumer-facing event surface) is now wrong.
+    Plunk documents a full OUTBOUND event catalogue at
+    https://docs.useplunk.com/guides/webhooks — twelve event types across email,
+    contact, segment and custom families, each with a published payload schema —
+    delivered as a WEBHOOK step inside a workflow rather than through a webhook
+    subscription API. Captured in asyncapi/plunk-webhooks.yml and wired as
+    type Webhooks. Two further corrections from the same pass: Plunk now
+    publishes its own OpenAPI 3.1.0 at https://docs.useplunk.com/openapi.json
+    declaring https://next-api.useplunk.com as the base URL (the endpoint list
+    below reflects the older api.useplunk.com surface), and it supports an
+    Idempotency-Key header on POST /v1/send and POST /v1/track as of platform
+    release v0.13.0 (2026-08-09).
 review:
   question: Does Plunk expose a documented public WebSocket or streaming API?
   answer: false

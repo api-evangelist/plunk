@@ -4,8 +4,12 @@ schema: https://raw.githubusercontent.com/api-evangelist/interface-research/main
 provider: Plunk
 providerId: plunk
 created: '2026-06-20'
-modified: '2026-06-20'
-reconciled: false
+modified: '2026-08-13'
+generated: '2026-08-13'
+method: searched
+source: https://docs.useplunk.com/api-reference/overview
+limit_count: 3
+reconciled: true
 tags:
 - Email
 - Transactional Email
@@ -23,14 +27,44 @@ description: >-
   rather than rejected. Requests that exceed the limit return HTTP 429.
   Self-hosted deployments can configure their own limits.
 notes: >-
-  Documented hosted limits as of review; bulk sends are queued, not failed.
-  Self-hosted instances set their own throttling. Verify current values in the
-  Plunk API reference on reconciliation.
+  Re-verified 2026-08-13 against the Plunk API reference. The 1,000 req/min
+  project limit is confirmed and stated exactly. The material finding on this
+  pass is what is NOT published — see responseHeaders below.
 sources:
 - https://docs.useplunk.com/api-reference/overview
+- https://docs.useplunk.com/api-reference/errors
+- https://docs.useplunk.com/concepts/billing
 - https://www.useplunk.com/pricing
 responseCodes:
   throttled: 429
+  throttledCode: RATE_LIMIT_EXCEEDED
+  billingCapped: 402
+  billingCappedCodes: [BILLING_LIMIT_EXCEEDED, UPGRADE_REQUIRED]
+responseHeaders:
+  published: []
+  correlation: X-Request-ID
+  note: >-
+    GAP, and the most consequential one for agent use. Plunk documents the
+    numeric limit but publishes NO runtime rate-limit response headers — no
+    RateLimit-Limit/Remaining/Reset, no X-RateLimit-*, and no Retry-After on the
+    429. The error reference tells callers to implement exponential backoff
+    (1s, 2s, 4s, 8s) with no signal to base it on, so a client cannot read its
+    remaining budget or the correct wait. The only header Plunk does return on
+    every response, success or failure, is X-Request-ID for correlation.
+  observed: probed
+  observed_note: >-
+    Unauthenticated probes of the API host root return the Plunk JSON 404
+    envelope with no rate-limit headers; the documented limits could not be
+    exercised anonymously, so this records what the docs publish plus what the
+    error reference tells clients to do.
+billingBackpressure:
+  distinct_from_rate_limiting: true
+  note: >-
+    A separate throttle sits alongside the request rate limit: per-category
+    monthly billing caps (Transactional, Campaigns, Workflows, Inbound). Hitting
+    one returns 402 BILLING_LIMIT_EXCEEDED on outbound sends, while inbound mail
+    is dropped silently for the project until the cap resets. A client that only
+    handles 429 will misread 402 as a hard failure. See plans/plunk-plans-pricing.yml.
 limits:
 - name: Requests Per Minute
   scope: project

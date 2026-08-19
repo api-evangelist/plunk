@@ -1,0 +1,89 @@
+generated: '2026-08-13'
+method: derived
+status: candidate
+source: openapi/_original/plunk-api-openapi.json
+note: >-
+  Plunk publishes NO first-party MCP server. Probed and absent: no /mcp route on
+  api.useplunk.com or next-api.useplunk.com (both return the Plunk JSON 404
+  envelope), no mcp.useplunk.com host (DNS does not resolve), no MCP mention in
+  either llms.txt, and no MCP package under the useplunk npm scope or GitHub
+  organization. The tools[] below are a DERIVED CANDIDATE mapped one-to-one onto
+  the operations in Plunk's published OpenAPI — a design starting point, not
+  something Plunk ships. No MCPServer pointer is wired into apis.yml.
+
+deployment:
+  mode: none
+  endpoint: null
+  install: null
+  package: null
+  auth: unknown
+  verified: derived
+
+probe_evidence:
+- {url: 'https://next-api.useplunk.com/mcp', status: 404}
+- {url: 'https://api.useplunk.com/openapi.json', status: 404, note: API host root serves the JSON 404 envelope for every unknown route.}
+- {url: 'https://mcp.useplunk.com', status: 000, note: DNS does not resolve.}
+- {url: 'https://docs.useplunk.com/llms.txt', status: 200, note: Full documentation index; contains no MCP entry.}
+
+third_party_servers:
+- name: "@ignytehq/plunk-mcp"
+  official: false
+  vendor: Ignyte (github.com/ignytehq)
+  package: https://www.npmjs.com/package/@ignytehq/plunk-mcp
+  repository: https://github.com/ignytehq/plunk-mcp
+  version: 1.2.0
+  published: '2026-07-03'
+  mode: local-stdio
+  install: npx -y @ignytehq/plunk-mcp
+  auth: api-key
+  auth_note: >-
+    Configured with PLUNK_API_KEY (sk_) and optionally PLUNK_PUBLIC_KEY (pk_),
+    plus PLUNK_API_URL to point at a hosted or self-hosted instance. Because
+    Plunk keys are project-scoped, one server registration is needed per project.
+  tool_count_claimed: 84
+  coverage_claimed: [transactional email, contacts, campaigns, segments, templates, workflows, events, analytics]
+  verified: searched
+  verified_note: >-
+    Recorded from the package's published npm metadata and README. Not probed
+    live — it is a stdio package with no endpoint to probe, and it requires a
+    caller's own Plunk API key. Explicitly self-described as unofficial and not
+    affiliated with Plunk, so it earns Plunk NO agent-surface credit here.
+  relevance: >-
+    Worth recording because its stated motivation is the same decay this pass
+    measured independently: "Plunk's official Node SDK does two things, track
+    and send. The API behind those two methods has grown into a full email
+    automation platform... but the SDK never caught up." See
+    packages/plunk-packages.yml — @plunk/node has not shipped since 2024-10-15.
+
+tools:
+  note: >-
+    DERIVED CANDIDATE ONLY. One tool per operationId in the published OpenAPI.
+    Each tool's real input contract is that operation's parameters + requestBody
+    in openapi/_original/plunk-api-openapi.json; nothing here was invented.
+  items:
+  - {name: send_email, description: Send a transactional email to one or more recipients, source_operation: 'openapi/_original/plunk-api-openapi.json#sendEmail', consequence: write, note: Supports Idempotency-Key; billable per recipient.}
+  - {name: track_event, description: Track an event for a contact, upserting the contact and triggering workflows, source_operation: 'openapi/_original/plunk-api-openapi.json#trackEvent', consequence: write, note: 'The one operation requiring a public (pk_) key rather than a secret key. Supports Idempotency-Key.'}
+  - {name: verify_email, description: Validate an email address for format, MX records, disposable domains and typos, source_operation: 'openapi/_original/plunk-api-openapi.json#verifyEmail', consequence: read}
+  - {name: list_contacts, description: List contacts with cursor pagination and email substring search, source_operation: 'openapi/_original/plunk-api-openapi.json#listContacts', consequence: read}
+  - {name: create_contact, description: Create or upsert a contact by email, source_operation: 'openapi/_original/plunk-api-openapi.json#createContact', consequence: write}
+  - {name: get_contact, description: Get a single contact by ID, source_operation: 'openapi/_original/plunk-api-openapi.json#getContact', consequence: read}
+  - {name: update_contact, description: Update a contact's email, subscription state or custom data fields, source_operation: 'openapi/_original/plunk-api-openapi.json#updateContact', consequence: write}
+  - {name: delete_contact, description: Delete a contact, source_operation: 'openapi/_original/plunk-api-openapi.json#deleteContact', consequence: destructive}
+  - {name: list_templates, description: List email templates, source_operation: 'openapi/_original/plunk-api-openapi.json#listTemplates', consequence: read}
+  - {name: create_template, description: Create an email template on a verified sending domain, source_operation: 'openapi/_original/plunk-api-openapi.json#createTemplate', consequence: write}
+  - {name: list_campaigns, description: List campaigns, source_operation: 'openapi/_original/plunk-api-openapi.json#listCampaigns', consequence: read}
+  - {name: create_campaign, description: Create a campaign in DRAFT status, source_operation: 'openapi/_original/plunk-api-openapi.json#createCampaign', consequence: write}
+  - {name: send_campaign, description: Send or schedule a campaign, source_operation: 'openapi/_original/plunk-api-openapi.json#sendCampaign', consequence: physical, note: 'Highest-consequence operation in the surface — sends to a whole audience and is billed per recipient. Not reversible once SENDING. Should require human confirmation.'}
+  - {name: list_segments, description: List audience segments, source_operation: 'openapi/_original/plunk-api-openapi.json#listSegments', consequence: read}
+  - {name: create_segment, description: Create a dynamic or static audience segment, source_operation: 'openapi/_original/plunk-api-openapi.json#createSegment', consequence: write}
+
+coverage_gap:
+  note: >-
+    The published OpenAPI models 15 operations; the API reference documents
+    roughly 120 endpoints across workflows, events, domains, activity,
+    analytics, uploads, bulk jobs and project administration. A candidate tool
+    list derived from the spec therefore covers only the documented-in-spec
+    slice. The unmodelled endpoints are enumerated in
+    data-model/plunk-data-model.yml rather than guessed at here.
+  spec_operations: 15
+  documented_endpoints_approx: 120

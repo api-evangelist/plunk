@@ -1,0 +1,103 @@
+generated: '2026-08-13'
+method: searched
+source: https://docs.useplunk.com/api-reference/errors
+spec: openapi/_original/plunk-api-openapi.json
+format: custom-envelope
+rfc9457: false
+note: >-
+  Plunk publishes a complete machine-readable error-code registry with a
+  documented envelope, but it is NOT RFC 9457 application/problem+json. Errors
+  are returned as application/json in Plunk's own shape. The envelope is
+  unusually rich for its class: every error carries a stable machine code, a
+  correlation requestId, and — uniquely — a human remediation `suggestion`
+  string. Field-level validation detail arrives as an errors[] array.
+
+envelope:
+  media_type: application/json
+  fields:
+  - {name: success, type: boolean, description: Always false for errors.}
+  - {name: error.code, type: string, description: Machine-readable error code. Use this for programmatic handling, not the status code.}
+  - {name: error.message, type: string, description: Human-readable description.}
+  - {name: error.statusCode, type: integer, description: HTTP status code, mirrored into the body.}
+  - {name: error.requestId, type: string, description: Correlation ID, also returned in the X-Request-ID response header.}
+  - {name: error.errors, type: array, description: "Field-level validation detail: {field, message, code}. Validation errors only."}
+  - {name: error.details, type: object, description: Additional error context (e.g. the resource and id on a 404, or the original request on an idempotency conflict).}
+  - {name: error.suggestion, type: string, description: Remediation hint for fixing the request.}
+  - {name: timestamp, type: string, format: date-time, description: When the error occurred.}
+  correlation_header: X-Request-ID
+
+legacy_envelope:
+  applies_to: [POST /contacts, POST /templates, POST /segments]
+  status: 400
+  shape: '{"error": "<string>"}'
+  schema: openapi/_original/plunk-api-openapi.json#/components/schemas/LegacyError
+  note: >-
+    Documented deviation. The hand-validated create endpoints return a bare flat
+    error string for missing required fields. Errors raised deeper in those same
+    endpoints (404, 409, domain verification) use the standard envelope. Clients
+    must branch on shape for these three routes.
+
+status_codes:
+- {status: 200, meaning: Request successful}
+- {status: 201, meaning: Resource created}
+- {status: 204, meaning: "Deleted (DELETE /contacts/{id})"}
+- {status: 400, meaning: Invalid request format or parameters}
+- {status: 401, meaning: Authentication failed or missing}
+- {status: 402, meaning: Billing limit reached or plan upgrade required}
+- {status: 403, meaning: Not authorized, email verification required, or project disabled}
+- {status: 404, meaning: Resource does not exist}
+- {status: 409, meaning: Conflict with current resource state, including idempotency-key reuse}
+- {status: 422, meaning: Request validation failed; see the errors array}
+- {status: 429, meaning: Rate limit exceeded}
+- {status: 500, meaning: Unexpected server error}
+
+problems:
+# --- Authentication & authorization ---
+- {code: UNAUTHORIZED, status: 401, category: auth, title: General authentication failure}
+- {code: INVALID_CREDENTIALS, status: 401, category: auth, title: Login credentials are incorrect}
+- {code: MISSING_AUTH, status: 401, category: auth, title: Authorization header is missing or malformed,
+   remediation: 'Include an Authorization header of the form "Authorization: Bearer YOUR_API_KEY".'}
+- {code: INVALID_API_KEY, status: 401, category: auth, title: API key is invalid or not found,
+   remediation: 'Verify the key and that its class matches the endpoint — sk_ for every endpoint except POST /v1/track, pk_ for POST /v1/track. A key of the wrong class is rejected with this code.'}
+- {code: FORBIDDEN, status: 403, category: auth, title: Not allowed to perform this action}
+- {code: PROJECT_ACCESS_DENIED, status: 403, category: auth, title: No access to this project}
+- {code: PROJECT_DISABLED, status: 403, category: auth, title: Project has been disabled}
+- {code: EMAIL_VERIFICATION_REQUIRED, status: 403, category: auth, title: The user's email address must be verified before this action}
+# --- Validation & input ---
+- {code: BAD_REQUEST, status: 400, category: validation, title: General request error}
+- {code: INVALID_REQUEST_BODY, status: 400, category: validation, title: Request body is malformed}
+- {code: VALIDATION_ERROR, status: 422, category: validation, title: Request validation failed,
+   remediation: 'Read the errors[] array for per-field detail. Each entry carries field, message and a code such as invalid_string or invalid_type.'}
+- {code: INVALID_EMAIL, status: 422, category: validation, title: Email format is invalid}
+- {code: MISSING_REQUIRED_FIELD, status: 422, category: validation, title: Required field is missing}
+# --- Resource ---
+- {code: RESOURCE_NOT_FOUND, status: 404, category: resource, title: Generic resource not found}
+- {code: CONTACT_NOT_FOUND, status: 404, category: resource, title: Contact does not exist}
+- {code: TEMPLATE_NOT_FOUND, status: 404, category: resource, title: Template does not exist,
+   remediation: 'details carries {resource, id}. Confirm the template ID belongs to your project; list templates via GET /templates.'}
+- {code: CAMPAIGN_NOT_FOUND, status: 404, category: resource, title: Campaign does not exist}
+- {code: WORKFLOW_NOT_FOUND, status: 404, category: resource, title: Workflow does not exist}
+- {code: CONFLICT, status: 409, category: resource, title: Resource conflict,
+   remediation: 'Raised when creating a contact with an existing email, updating to an email already taken, or deleting a campaign/segment that has active executions or is used by an active campaign.'}
+- {code: IDEMPOTENCY_KEY_REUSED, status: 409, category: idempotency, title: Idempotency-Key has already been used by this project,
+   remediation: 'The operation was NOT performed a second time. details carries {key, originalRequest, originalRequestAt, originalStatusCode}. An originalStatusCode of null means the original request is still in flight and this one lost the race. Plunk refuses rather than replaying, so the original resource ID is not returned — record it on first success. Keys expire after 24h.',
+   source_doc: https://docs.useplunk.com/guides/idempotency}
+# --- Rate limiting & billing ---
+- {code: RATE_LIMIT_EXCEEDED, status: 429, category: rate-limit, title: Too many requests,
+   remediation: 'Back off exponentially (1s, 2s, 4s, 8s). No Retry-After or RateLimit-* header is published, so the delay cannot be read from the response.'}
+- {code: BILLING_LIMIT_EXCEEDED, status: 402, category: billing, title: Billing limit reached,
+   remediation: 'A per-category monthly cap (Transactional, Campaigns, Workflows, Inbound) or the plan allowance was exceeded. Queue the work or surface it to the user; caps reset at the start of each billing period.'}
+- {code: UPGRADE_REQUIRED, status: 402, category: billing, title: Feature requires plan upgrade}
+# --- Server ---
+- {code: INTERNAL_SERVER_ERROR, status: 500, category: server, title: Unexpected server error,
+   remediation: 'Capture error.requestId and retry once. Contact support with the request ID if it persists; check status.useplunk.com for an incident.'}
+- {code: DATABASE_ERROR, status: 500, category: server, title: Database operation failed}
+- {code: EXTERNAL_SERVICE_ERROR, status: 500, category: server, title: External service unavailable}
+
+summary:
+  code_count: 26
+  documented_registry: true
+  correlation_id: true
+  remediation_hints: true
+  field_level_detail: true
+  media_type_registered: false

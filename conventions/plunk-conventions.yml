@@ -1,0 +1,244 @@
+generated: '2026-08-13'
+method: searched
+source: https://docs.useplunk.com/api-reference/overview
+docs:
+  api_reference: https://docs.useplunk.com/api-reference/overview
+  idempotency: https://docs.useplunk.com/guides/idempotency
+  api_keys: https://docs.useplunk.com/guides/api-keys
+  errors: https://docs.useplunk.com/api-reference/errors
+  data_retention: https://docs.useplunk.com/guides/data-retention
+spec: openapi/_original/plunk-api-openapi.json
+
+authentication:
+  style: bearer-api-key
+  header: Authorization
+  format: "Bearer <key>"
+  key_types:
+  - prefix: sk_
+    name: secret key
+    scope: every endpoint except POST /v1/track
+    placement: server-side only
+  - prefix: pk_
+    name: public key
+    scope: POST /v1/track only
+    placement: safe in browser / mobile client code
+  project_binding: >-
+    The project is derived from the key itself. There is no project ID
+    parameter on API requests.
+  mismatch_behavior: >-
+    Using the wrong key class for an endpoint returns 401 with error code
+    INVALID_API_KEY. The two key types are not interchangeable in either
+    direction.
+  rotation: >-
+    Keys rotate as a pair via POST /users/@me/projects/:id/regenerate-keys or
+    Settings -> API Keys. Rotation invalidates both keys immediately; there is
+    no grace period.
+  cross_reference: authentication/plunk-authentication.yml
+
+idempotency:
+  supported: true
+  header: Idempotency-Key
+  applies_to:
+  - POST /v1/send
+  - POST /v1/track
+  optional: true
+  key_format: 1-255 printable ASCII characters, caller-chosen (UUID or derived, e.g. receipt-order-1234)
+  scope: project
+  cross_endpoint: false
+  cross_endpoint_note: >-
+    Keys are scoped to the project, not the endpoint — a key claimed on
+    /v1/track cannot then be used on /v1/send. Two different projects may use
+    the same key string independently.
+  retention: 24h
+  retention_configurable: true
+  retention_env_var: IDEMPOTENCY_KEY_TTL_HOURS
+  semantics: at-most-once
+  replay: false
+  replay_note: >-
+    IMPORTANT DIVERGENCE FROM THE STRIPE-STYLE MODEL. Plunk REFUSES a reused key
+    rather than replaying the original response. A reuse returns 409 with error
+    code IDEMPOTENCY_KEY_REUSED and a details object carrying key,
+    originalRequest, originalRequestAt and originalStatusCode. An
+    originalStatusCode of null means the original request is still in flight and
+    this one lost the race. A 409 proves the operation was not performed twice,
+    but it does NOT return the original email or event ID — the caller must
+    record that ID on the first success.
+  key_release_rules:
+  - outcome: 2xx success
+    key: kept
+    reason: The operation happened; a retry would duplicate it.
+  - outcome: 4xx client error
+    key: released
+    reason: Validation and permission errors are rejected before anything is written, so the same key may be retried after fixing the request.
+  - outcome: 5xx server error
+    key: kept
+    reason: The request may have partially completed; refusing the retry is the point of the key.
+  multi_recipient_note: >-
+    POST /v1/send accepts an array of recipients and processes them one at a
+    time. The key covers the request as a whole, not each recipient. A 5xx
+    partway through leaves the key claimed precisely so a blind retry does not
+    re-send to the recipients already delivered. For per-recipient control,
+    send one request per recipient with its own key.
+  spec_evidence: openapi/_original/plunk-api-openapi.json#/components/parameters/IdempotencyKey
+  shipped: v0.13.0 (2026-08-09)
+
+pagination:
+  primary_style: cursor
+  cursor:
+    request_params:
+    - {name: limit, in: query, default: 20, max: 100, note: Values above 100 are clamped.}
+    - {name: cursor, in: query, note: Pass the cursor returned by the previous page.}
+    response_fields:
+    - {name: data, type: array, description: The page of items.}
+    - {name: cursor, type: string, description: Opaque cursor to pass as the next request's cursor param.}
+    - {name: hasMore, type: boolean, description: false when the end of the collection is reached.}
+    - {name: total, type: integer, description: "Only populated on the first page (no cursor supplied); subsequent pages return total 0 to keep listing fast."}
+    applies_to: [GET /contacts, GET /templates, GET /campaigns]
+  secondary_style: page-based
+  page_based:
+    request_params:
+    - {name: page, in: query, default: 1, note: 1-based.}
+    - {name: pageSize, in: query, default: 20, max: 100}
+    response_fields: [total, page, pageSize]
+    applies_to: ["GET /segments/{id}/contacts"]
+  unpaginated:
+    applies_to: [GET /segments]
+    note: Segments are returned as a single small list with no pagination.
+  sorting:
+    param: dir
+    values: [asc, desc]
+    default: desc
+    note: Unrecognised values fall back to the default rather than erroring.
+
+response_envelope:
+  split: true
+  split_note: >-
+    Plunk runs two response shapes on one API and the difference is by route
+    family, not by verb. This is the single most important convention for a
+    client or agent to get right.
+  public_api:
+    applies_to: [POST /v1/send, POST /v1/track, POST /v1/verify]
+    shape: '{"success": true, "data": {...}}'
+    description: Wrapped envelope with a success boolean.
+  dashboard_api:
+    applies_to: [contacts, templates, campaigns, segments, workflows, events, domains, activity, analytics]
+    shape: '{"id": "...", ...}'
+    description: The resource is returned directly with no success/data wrapper.
+
+error_envelope:
+  format: custom
+  rfc9457: false
+  rfc9457_note: >-
+    Plunk does NOT use application/problem+json. It ships its own structured
+    envelope, which carries more than RFC 9457 requires (machine code,
+    correlation id, field-level errors, remediation hint) but is not the
+    registered media type.
+  shape:
+    success: false
+    error:
+      code: Machine-readable error code, e.g. VALIDATION_ERROR, INVALID_API_KEY, IDEMPOTENCY_KEY_REUSED
+      message: Human-readable description
+      statusCode: HTTP status code, mirrored into the body
+      requestId: Correlation ID; include when contacting support
+      errors: Field-level array of {field, message, code}, present on validation failures
+      details: Additional error context object (optional)
+      suggestion: Remediation hint for fixing the request (optional)
+    timestamp: ISO 8601 timestamp of the error
+  legacy_exception:
+    applies_to: [POST /contacts, POST /templates, POST /segments]
+    shape: '{"error": "<string>"}'
+    status: 400
+    note: >-
+      The hand-validated create endpoints return a bare flat error string with
+      400 for missing required fields instead of the standard envelope. Errors
+      raised deeper in those same endpoints (404, 409, domain verification)
+      still use the standard envelope. Captured verbatim as the LegacyError
+      schema in the published OpenAPI — a real, documented inconsistency a
+      client must handle.
+  cross_reference: errors/plunk-problem-types.yml
+
+request_tracing:
+  header: X-Request-ID
+  direction: response
+  present_on: both success and error responses
+  body_field: error.requestId
+  note: >-
+    The same correlation ID appears in the X-Request-ID response header and in
+    error.requestId. Plunk logs the ID end to end (API, database, queue,
+    worker), so quoting it to support resolves an incident without a repro.
+  retention: API request logs are retained 30 days.
+
+rate_limiting:
+  documented: true
+  api_requests: 1000 requests/minute per project
+  email_sending: throttled per project to protect deliverability (value not published)
+  bulk_operations: automatically queued for asynchronous processing rather than rejected
+  exhaustion_status: 429
+  exhaustion_code: RATE_LIMIT_EXCEEDED
+  response_headers: []
+  response_headers_note: >-
+    GAP. Plunk publishes the numeric limit but documents NO runtime rate-limit
+    response headers — no X-RateLimit-*, no RateLimit-*, no Retry-After. The
+    docs tell callers to implement exponential backoff (1s, 2s, 4s, 8s) blind.
+    An agent cannot read remaining budget from a response.
+  cross_reference: rate-limits/plunk-rate-limits.yml
+
+billing_backpressure:
+  status: 402
+  codes: [BILLING_LIMIT_EXCEEDED, UPGRADE_REQUIRED]
+  applies_to: [POST /v1/send, campaign sends, workflow SEND_EMAIL steps]
+  note: >-
+    Distinct from rate limiting. Per-category monthly caps (Transactional,
+    Campaigns, Workflows, Inbound) return 402 on outbound API calls. Inbound
+    email is dropped silently for the project until the cap resets — not
+    queued, not replayed.
+  docs: https://docs.useplunk.com/concepts/billing
+
+async_jobs:
+  pattern: submit-then-poll
+  note: >-
+    Bulk and import operations return a jobId immediately and are processed off
+    the request path.
+  operations:
+  - {submit: POST /contacts/import, poll: "GET /contacts/import/{jobId}", limit: CSV multipart, max 5 MB}
+  - {submit: POST /contacts/bulk-subscribe, poll: "GET /contacts/bulk/{jobId}", limit: 1000 contact IDs}
+  - {submit: POST /contacts/bulk-unsubscribe, poll: "GET /contacts/bulk/{jobId}", limit: 1000 contact IDs}
+  - {submit: POST /contacts/bulk-delete, poll: "GET /contacts/bulk/{jobId}", limit: 1000 contact IDs}
+
+versioning:
+  scheme: split
+  public_api: URI path prefix /v1 (POST /v1/send, /v1/track, /v1/verify)
+  dashboard_api: unversioned paths (/contacts, /campaigns, /segments, /templates, /workflows)
+  platform_releases: semver git tags on github.com/useplunk/plunk, automated with release-please
+  current_platform_version: v0.13.0
+  cross_reference: lifecycle/plunk-lifecycle.yml
+
+field_expansion:
+  supported: false
+  note: No expand / sparse-fieldset parameter is documented.
+
+metadata:
+  supported: true
+  mechanism: >-
+    Arbitrary custom data is stored on a contact under the data object
+    (additionalProperties true) and is addressable in templates and webhooks as
+    {{key}} or {{data.key}}. Field types and coverage are introspectable via
+    GET /contacts/fields.
+  docs: https://docs.useplunk.com/guides/custom-fields
+
+filtering:
+  supported: true
+  mechanism: >-
+    Segment / campaign-audience / workflow-condition filters share one filter
+    grammar (FilterGroup / FilterCondition in the published OpenAPI).
+  docs: https://docs.useplunk.com/guides/segment-filters
+
+content_negotiation:
+  markdown_twin: true
+  note: >-
+    Every documentation page on both www.useplunk.com and docs.useplunk.com is
+    served as Markdown by appending .md to the path, or by requesting the same
+    URL with Accept: text/markdown. API reference pages render the OpenAPI
+    operation — parameters, request/response schemas and a sample curl —
+    directly into the Markdown response. This is an explicit agent-readable
+    documentation surface, published and advertised in llms.txt.

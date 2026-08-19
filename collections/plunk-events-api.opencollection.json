@@ -1,0 +1,43 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Plunk Campaigns Events API",
+    "version": "1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Events",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Track a contact event",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.useplunk.com/v1/track",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Publishes a named event for a contact. If the contact does not exist it is created. Events trigger any matching automation. This endpoint may be called with either a public key (pk_) for safe client-side use or a secret key."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

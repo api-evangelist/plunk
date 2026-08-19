@@ -1,0 +1,55 @@
+generated: '2026-08-13'
+method: probed
+source: live GET probes of every Plunk host in apis.yml + OpenAPI servers[]
+note: >-
+  Every /.well-known/ path probed returned 404 on every Plunk host. The API hosts
+  (api.useplunk.com, next-api.useplunk.com) return a JSON 404 envelope
+  ("Unknown route"); the marketing and docs hosts return their SPA 404 HTML shell.
+  No WellKnown or SecurityTxt pointer is emitted in apis.yml — this file records a
+  measured absence, not a served discovery surface.
+hosts:
+- host: https://api.useplunk.com
+  documents:
+  - {path: /.well-known/security.txt, status: 404}
+  - {path: /.well-known/openid-configuration, status: 404}
+  - {path: /.well-known/oauth-authorization-server, status: 404}
+  - {path: /.well-known/api-catalog, status: 404}
+  - {path: /.well-known/ai-plugin.json, status: 404}
+  - {path: /.well-known/agent-card.json, status: 404}
+  - {path: /.well-known/agent.json, status: 404}
+- host: https://next-api.useplunk.com
+  documents:
+  - {path: /.well-known/security.txt, status: 404}
+  - {path: /.well-known/agent-card.json, status: 404}
+  - {path: /.well-known/agent.json, status: 404}
+- host: https://www.useplunk.com
+  documents:
+  - {path: /.well-known/security.txt, status: 404, note: HTML 404 shell}
+  - {path: /.well-known/openid-configuration, status: 404, note: HTML 404 shell}
+  - {path: /.well-known/oauth-authorization-server, status: 404, note: HTML 404 shell}
+  - {path: /.well-known/api-catalog, status: 404, note: HTML 404 shell}
+  - {path: /.well-known/ai-plugin.json, status: 404, note: HTML 404 shell}
+  - {path: /.well-known/agent-card.json, status: 404, note: HTML 404 shell}
+  - {path: /.well-known/agent.json, status: 404, note: HTML 404 shell}
+- host: https://docs.useplunk.com
+  documents:
+  - {path: /.well-known/security.txt, status: 404, note: HTML 404 shell}
+  - {path: /.well-known/openid-configuration, status: 404, note: HTML 404 shell}
+  - {path: /.well-known/oauth-authorization-server, status: 404, note: HTML 404 shell}
+  - {path: /.well-known/api-catalog, status: 404, note: HTML 404 shell}
+  - {path: /.well-known/ai-plugin.json, status: 404, note: HTML 404 shell}
+  - {path: /.well-known/agent-card.json, status: 404, note: HTML 404 shell}
+  - {path: /.well-known/agent.json, status: 404, note: HTML 404 shell}
+summary:
+  hosts_probed: 4
+  paths_probed: 24
+  documents_served: 0
+adjacent_discovery_that_does_exist:
+  note: >-
+    Plunk publishes discovery documents, just not under /.well-known/. Recorded
+    here so the absence above is not read as "no machine-readable surface".
+  documents:
+  - {url: 'https://docs.useplunk.com/openapi.json', status: 200, kind: OpenAPI 3.1.0}
+  - {url: 'https://docs.useplunk.com/llms.txt', status: 200, kind: llms.txt}
+  - {url: 'https://www.useplunk.com/llms.txt', status: 200, kind: llms.txt}
+  - {url: 'https://next-api.useplunk.com/config', status: 200, kind: unauthenticated feature-flag / service-URL document}

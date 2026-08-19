@@ -1,0 +1,170 @@
+generated: '2026-08-13'
+method: derived
+source: openapi/_original/plunk-api-openapi.json
+enriched_from:
+- https://docs.useplunk.com/api-reference/overview
+- https://docs.useplunk.com/concepts/workflows
+- https://docs.useplunk.com/guides/webhooks
+note: >-
+  Entity graph derived from the schemas and id-reference fields in Plunk's
+  published OpenAPI 3.1.0, extended with the resources the API reference
+  documents but the spec does not yet model (Workflow, Step, Transition,
+  Execution, Event, Domain, Project). Entities marked spec_modelled false are
+  documented endpoints without a components.schemas entry — a real coverage gap
+  in the published spec, recorded rather than invented.
+
+id_prefixes:
+  note: >-
+    Observed in the documentation examples and webhook payloads. Not declared as
+    patterns in the OpenAPI, so treat as convention rather than contract.
+  observed:
+  - {entity: Contact, prefix: 'cnt_', example: cnt_abc123}
+  - {entity: Template, prefix: 'tpl_', example: tpl_abc123}
+  - {entity: Campaign, prefix: 'camp_', example: camp_abc123}
+  - {entity: Segment, prefix: 'seg_', example: seg_abc123}
+  - {entity: Workflow, prefix: 'wf_', example: wf_abc123}
+  - {entity: Execution, prefix: 'exec_', example: exec_xyz789}
+  - {entity: Event, prefix: 'evt_', example: evt_xyz789}
+  - {entity: Email, prefix: none, example: 'ac32f08e-c6b9-45d3-9824-a73dff1e3bbf', note: 'Email record IDs are bare UUIDs, not prefixed. Returned by POST /v1/send and echoed as event.emailId on every email webhook.'}
+
+entities:
+- name: Project
+  spec_modelled: false
+  description: >-
+    The tenancy boundary for everything else. Derived automatically from the API
+    key, so it is never a request parameter. Owns both API keys, billing limits,
+    domains and every other resource.
+  key_fields: [id, name]
+  operations: [GET /users/@me/projects, POST /users/@me/projects, "PATCH /users/@me/projects/{id}", "GET /projects/{id}/setup-state", "GET /projects/{id}/security"]
+- name: Contact
+  spec_modelled: true
+  schema: '#/components/schemas/Contact'
+  description: A subscriber record, upserted by email, carrying arbitrary custom data.
+  key_fields: [id, email, subscribed, data, createdAt, updatedAt]
+  natural_key: email
+  operations: [listContacts, createContact, getContact, updateContact, deleteContact]
+  extra_operations: [POST /contacts/lookup, GET /contacts/fields, "GET /contacts/fields/{field}/values", "GET /contacts/fields/{field}/usage", "DELETE /contacts/fields/{field}", POST /contacts/import, POST /contacts/bulk-subscribe, POST /contacts/bulk-unsubscribe, POST /contacts/bulk-delete]
+  note: >-
+    createContact is an upsert keyed on email and returns _meta.isNew /
+    _meta.isUpdate. Custom fields live in the open `data` object and are
+    introspectable — GET /contacts/fields reports inferred types and coverage
+    percentages, which is what makes the segment filter UI possible.
+- name: Template
+  spec_modelled: true
+  schema: '#/components/schemas/Template'
+  description: A reusable email body with {{variable}} placeholders.
+  key_fields: [id, name, description, subject, body, from, fromName, replyTo, type, projectId, createdAt, updatedAt]
+  enums:
+    type: [TRANSACTIONAL, MARKETING, HEADLESS]
+  operations: [listTemplates, createTemplate]
+  extra_operations: ["GET /templates/{id}", "PATCH /templates/{id}", "DELETE /templates/{id}", "POST /templates/{id}/duplicate", "GET /templates/{id}/usage"]
+  note: >-
+    `type` is load-bearing beyond content classification: MARKETING gets an
+    auto-injected localized unsubscribe footer, HEADLESS gets none (the author
+    must include {{unsubscribeUrl}}), TRANSACTIONAL skips subscription checks
+    entirely. `from` must belong to a verified Domain.
+- name: Campaign
+  spec_modelled: true
+  schema: '#/components/schemas/Campaign'
+  description: A one-off broadcast to a defined audience.
+  key_fields: [id, name, description, subject, body, from, fromName, replyTo, type, status, audienceType, audienceCondition, segmentId, scheduledFor]
+  enums:
+    type: [TRANSACTIONAL, MARKETING, HEADLESS]
+    status: [DRAFT, SCHEDULED, SENDING, SENT, CANCELLED]
+    audienceType: [ALL, SEGMENT, FILTERED]
+  operations: [listCampaigns, createCampaign, sendCampaign]
+  extra_operations: ["GET /campaigns/{id}", "PUT /campaigns/{id}", "DELETE /campaigns/{id}", "POST /campaigns/{id}/duplicate", "POST /campaigns/{id}/cancel", "POST /campaigns/{id}/test", "GET /campaigns/{id}/stats"]
+  note: >-
+    Campaign carries TWO fields named type-ish and they mean different things —
+    `type` is the content class (shared enum with Template) and `audienceType`
+    is who receives it. The spec calls this out explicitly. audienceCondition is
+    populated only when audienceType is FILTERED; segmentId only when SEGMENT.
+- name: Segment
+  spec_modelled: true
+  schema: '#/components/schemas/Segment'
+  description: A named audience, either a live filter (DYNAMIC) or an explicit list (STATIC).
+  key_fields: [id, name, description, type, condition, memberCount, trackMembership]
+  operations: [listSegments, createSegment]
+  extra_operations: ["GET /segments/{id}", "PATCH /segments/{id}", "DELETE /segments/{id}", "GET /segments/{id}/contacts", "POST /segments/{id}/members", "DELETE /segments/{id}/members", "POST /segments/{id}/compute", "POST /segments/{id}/refresh"]
+  note: >-
+    type DYNAMIC requires condition; type STATIC rejects it. Only static
+    segments accept member add/remove. compute recomputes membership and fires
+    segment entry/exit events; refresh only updates the cached count.
+- name: Filter
+  spec_modelled: true
+  schema: '#/components/schemas/Filter'
+  description: >-
+    The shared filter grammar (Filter / FilterGroup / FilterCondition) used by
+    dynamic segments, FILTERED campaign audiences and workflow CONDITION steps.
+    One vocabulary, three consumers.
+  docs: https://docs.useplunk.com/guides/segment-filters
+- name: Workflow
+  spec_modelled: false
+  description: An automated multi-step journey triggered by an event, segment, schedule or manual entry.
+  key_fields: [id, name, triggerType, triggerConfig, enabled, allowReentry]
+  operations: [GET /workflows, POST /workflows, "GET /workflows/{id}", "PATCH /workflows/{id}", "DELETE /workflows/{id}", GET /workflows/fields]
+  note: Always created with triggerType EVENT and enabled false.
+- name: Step
+  spec_modelled: false
+  description: A node in a workflow graph.
+  enums:
+    type: [SEND_EMAIL, DELAY, WAIT_FOR_EVENT, CONDITION, WEBHOOK, UPDATE_CONTACT, EXIT]
+  operations: ["POST /workflows/{id}/steps", "PATCH /workflows/{id}/steps/{stepId}", "DELETE /workflows/{id}/steps/{stepId}"]
+- name: Transition
+  spec_modelled: false
+  description: A directed edge between two steps. CONDITION steps branch on "yes"/"no".
+  operations: ["POST /workflows/{id}/transitions", "DELETE /workflows/{id}/transitions/{transitionId}"]
+- name: Execution
+  spec_modelled: false
+  description: One contact's traversal of one workflow.
+  operations: ["POST /workflows/{id}/executions", "GET /workflows/{id}/executions", "GET /workflows/{id}/executions/{executionId}", "DELETE /workflows/{id}/executions/{executionId}", "POST /workflows/{id}/executions/cancel-all"]
+  note: A MANUAL execution can carry a context JSON of per-execution template variables.
+- name: Event
+  spec_modelled: false
+  description: A tracked occurrence attached to a contact; the trigger substrate for workflows and segments.
+  operations: [POST /v1/track, GET /events, GET /events/stats, "GET /events/contact/{contactId}", GET /events/names, "GET /events/{eventName}/usage", "DELETE /events/{eventName}"]
+- name: Email
+  spec_modelled: false
+  description: >-
+    The record of a single send. Its bare-UUID id is returned by POST /v1/send
+    and echoed as event.emailId on every email webhook — the join key between
+    the API and the event stream.
+  retention: {metadata: indefinite, rendered_body: 90 days}
+- name: Domain
+  spec_modelled: false
+  description: A verified sending domain. Every template/campaign `from` address must belong to one.
+  operations: ["GET /domains/project/{projectId}", POST /domains, "GET /domains/{id}/verify", "DELETE /domains/{id}"]
+
+relationships:
+- {from: Project, to: Contact, kind: has_many, via: projectId, note: Implicit — derived from the API key, never a request parameter.}
+- {from: Project, to: Template, kind: has_many, via: projectId}
+- {from: Project, to: Campaign, kind: has_many, via: projectId}
+- {from: Project, to: Segment, kind: has_many, via: projectId}
+- {from: Project, to: Workflow, kind: has_many, via: projectId}
+- {from: Project, to: Domain, kind: has_many, via: projectId}
+- {from: Campaign, to: Segment, kind: has_one, via: segmentId, note: Only when audienceType is SEGMENT.}
+- {from: Campaign, to: FilterCondition, kind: has_one, via: audienceCondition, note: Only when audienceType is FILTERED.}
+- {from: Campaign, to: Email, kind: has_many, via: campaignId, note: 'Surfaced on webhook payloads and GET /campaigns/{id}/stats.'}
+- {from: Segment, to: Filter, kind: has_one, via: condition, note: Required for DYNAMIC, rejected for STATIC.}
+- {from: Segment, to: Contact, kind: has_many, via: 'members (static) or evaluated condition (dynamic)'}
+- {from: Template, to: Domain, kind: belongs_to, via: 'from (address must be on a verified domain)'}
+- {from: Template, to: Campaign, kind: has_many, via: templateId, note: 'Reported by GET /templates/{id}/usage.'}
+- {from: Template, to: Step, kind: has_many, via: templateId, note: SEND_EMAIL steps reference a template.}
+- {from: Workflow, to: Step, kind: has_many, via: workflowId}
+- {from: Workflow, to: Transition, kind: has_many, via: workflowId}
+- {from: Workflow, to: Execution, kind: has_many, via: workflowId}
+- {from: Execution, to: Contact, kind: belongs_to, via: contactId}
+- {from: Execution, to: Step, kind: has_one, via: 'current step pointer'}
+- {from: Contact, to: Event, kind: has_many, via: contactId}
+- {from: Event, to: Workflow, kind: has_many, via: 'triggerConfig event name', note: An event name triggers zero or more workflows.}
+- {from: Email, to: Contact, kind: belongs_to, via: contactId}
+- {from: Email, to: Template, kind: has_one, via: templateId, note: Nullable.}
+- {from: Email, to: Campaign, kind: has_one, via: campaignId, note: Nullable.}
+
+summary:
+  entities: 13
+  spec_modelled: 6
+  documented_but_unmodelled: 7
+  relationships: 23
+  tenancy_root: Project
+  join_key_api_to_events: emailId

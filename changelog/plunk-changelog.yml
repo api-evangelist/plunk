@@ -1,0 +1,109 @@
+generated: '2026-08-13'
+method: searched
+source: https://github.com/useplunk/plunk/releases
+docs: https://github.com/useplunk/plunk/blob/next/CHANGELOG.md
+note: >-
+  Plunk publishes no product-marketing changelog page — there is no
+  useplunk.com/changelog or docs.useplunk.com/changelog (both 404). The real,
+  dated change record is the AGPL-3.0 repository's GitHub releases, generated
+  automatically by release-please from conventional commits. Because the hosted
+  service and the self-hosted distribution are the same codebase, these releases
+  ARE the API changelog: API-affecting changes appear here under `api:` scopes
+  and nowhere else. Recent window only; the full history is in CHANGELOG.md.
+scheme: semver
+automation: release-please
+conventional_commits: true
+current_version: v0.13.0
+current_version_date: '2026-08-09'
+release_cadence: >-
+  Roughly monthly minor releases through 2026 (0.4.0 January, 0.13.0 August).
+  No patch/hotfix tags between minors except v0.7.1.
+default_branch: next
+
+entries:
+- version: v0.13.0
+  date: '2026-08-09'
+  breaking: false
+  highlights:
+  - >-
+    API: implemented idempotency for POST /v1/track and POST /v1/send via an
+    Idempotency-Key header, with a cleanup job and IDEMPOTENCY_KEY_TTL_HOURS.
+    This is the change that put Plunk on the idempotency map — see
+    conventions/plunk-conventions.yml.
+  - "API: insert workflow steps mid-transition and validate connections."
+  - "Classified emails and built headers based on email type (closes #411)."
+  - "One-click POST unsubscribe links for Plunk-hosted emails (RFC 8058 style)."
+  - "Email body cleanup job removes rendered HTML after 90 days."
+  security_fixes:
+  - "API: closed an SSRF bypass via IPv6 transition addresses in workflow webhooks."
+  - "Events: rejected cross-tenant contact and email IDs on event tracking."
+  documentation:
+  - Updated the published OpenAPI spec to reflect the implementation.
+  i18n: [Swedish (sv)]
+- version: v0.12.0
+  date: '2026-06-22'
+  breaking: false
+  highlights:
+  - "API: allow API-key authentication for domain endpoints."
+  - "API: render template variables in WEBHOOK step url, headers and body."
+  - "Contacts: subscription-status filter and expanded query capabilities."
+  - Bulk delete for workflows and campaigns.
+  - Normalized contact email addresses to handle case variants and whitespace (closes #403).
+  - Added disabledReason to projects for clearer disable tracking.
+  - "SecurityService: phishing detection now verifies sender domains and institutional TLDs."
+  i18n: [Japanese (ja)]
+- version: v0.11.0
+  date: '2026-05-13'
+  breaking: false
+  highlights:
+  - Subscription status can now be changed inside workflows.
+  - "Segment filters: new notTriggeredWithin operator and segment-membership operators."
+  - Workflow duplication endpoint plus UI.
+  - Configurable MAIL FROM subdomain via MAIL_FROM_SUBDOMAIN.
+  - Early fraud warning handling in billing webhooks.
+  - Added sanitize-html for email content sanitization.
+- version: v0.10.0
+  date: '2026-05-01'
+  breaking: false
+  highlights:
+  - Configurable attachment limits for the email service (closes #358).
+  - Phishing detection via the OpenRouter API with a configurable sampling rate and confidence threshold.
+  - Meter-event processing queue for Stripe usage billing.
+  - Middleware support for .md file rewrites — the origin of the Markdown documentation twin.
+  - Content negotiation for xml and txt.
+  - "SES: emit List-Unsubscribe inside the header section, not the body."
+- version: v0.9.0
+  date: '2026-04-20'
+  breaking: false
+  highlights:
+  - >-
+    Added emailId to webhook events so webhooks correlate directly with the ID
+    returned by POST /v1/send (closes #344). See asyncapi/plunk-webhooks.yml.
+  - Added the headless template type.
+  - Content negotiation for markdown and HTML in middleware, on both the landing site and the wiki.
+  - SSRF protection in webhook handling via a safeFetch method.
+  - AWS SNS signature verification in SecurityService.
+  - DOMPurify integrated for HTML sanitization.
+  - Projects are disabled on failed payment.
+- version: v0.8.0
+  date: '2026-03-31'
+  breaking: false
+  highlights:
+  - Multi-branch workflow conditions (switch/case).
+  - SNS webhook validation extended to the AWS eusc partition.
+  i18n: [Chinese (zh-TW, zh-HK, zh-CN), Italian]
+
+older_releases:
+- {version: v0.7.1, date: '2026-03-10'}
+- {version: v0.7.0, date: '2026-03-05'}
+- {version: v0.6.0, date: '2026-02-19'}
+- {version: v0.5.0, date: '2026-02-17'}
+- {version: v0.4.0, date: '2026-01-09'}
+- {version: v0.3.0, date: '2025-12-29'}
+
+summary:
+  entries_captured: 6
+  older_listed: 6
+  window: 2025-12-29 to 2026-08-09
+  breaking_changes_in_window: 0
+  security_fixes_in_window: 5

@@ -1,0 +1,96 @@
+overlay: 1.0.0
+info:
+  title: API Evangelist enhancements for Plunk
+  version: 1.0.0
+extends: openapi/_original/plunk-api-openapi.json
+x-generated: '2026-08-13'
+x-method: generated
+x-source: >-
+  Derived from artifacts in this repo (conventions/, errors/, lifecycle/,
+  asyncapi/, data-model/) against Plunk's published OpenAPI 3.1.0. Captures API
+  Evangelist annotations only — the harvested spec is never mutated.
+actions:
+- target: $.info
+  update:
+    x-apievangelist-slug: plunk
+    x-apievangelist-profile: https://apis.io/provider/plunk
+    x-apievangelist-artifacts:
+      conventions: conventions/plunk-conventions.yml
+      errors: errors/plunk-problem-types.yml
+      lifecycle: lifecycle/plunk-lifecycle.yml
+      webhooks: asyncapi/plunk-webhooks.yml
+      data_model: data-model/plunk-data-model.yml
+      authentication: authentication/plunk-authentication.yml
+      packages: packages/plunk-packages.yml
+      changelog: changelog/plunk-changelog.yml
+      skills: skills/_index.yml
+    x-apievangelist-note: >-
+      The published spec models 15 of roughly 120 documented endpoints. Workflows,
+      events, domains, activity, analytics, uploads, bulk jobs and project
+      administration are documented in the API reference but absent from the
+      spec. See data-model/plunk-data-model.yml for the unmodelled entities.
+- target: $.servers
+  update:
+    x-apievangelist-base-url-note: >-
+      servers[0] declares https://next-api.useplunk.com, which matches the API
+      reference and the unauthenticated /config document. The legacy host
+      https://api.useplunk.com is still live and is still used in the code
+      samples on the idempotency guide. No deprecation notice or Sunset header
+      accompanies the migration.
+- target: $.components.parameters.IdempotencyKey
+  update:
+    x-apievangelist-semantics: at-most-once
+    x-apievangelist-replay: false
+    x-apievangelist-note: >-
+      Reuse is REFUSED with 409 IDEMPOTENCY_KEY_REUSED, not replayed. A retry
+      cannot recover the original resource ID; record it on first success. 4xx
+      failures release the key, 2xx and 5xx keep it. TTL 24h, project-scoped.
+- target: $.paths['/v1/send'].post
+  update:
+    x-apievangelist-consequence: physical
+    x-apievangelist-billable: 1 credit per recipient, 2 credits when the email carries attachments
+    x-apievangelist-backpressure: 402 BILLING_LIMIT_EXCEEDED when a per-category cap or the plan allowance is hit
+    x-apievangelist-note: >-
+      Multi-recipient sends are processed one at a time under a single
+      idempotency key. A 5xx partway through may leave some recipients already
+      sent to; the key stays claimed so a blind retry does not re-send.
+- target: $.paths['/v1/track'].post
+  update:
+    x-apievangelist-consequence: write
+    x-apievangelist-key-class: public
+    x-apievangelist-note: >-
+      The only operation gated by the public (pk_) key. A secret key is rejected
+      here with 401 INVALID_API_KEY. Safe to call from browser or mobile code.
+      Upserts the contact and triggers any matching workflows.
+- target: $.paths['/campaigns/{id}/send'].post
+  update:
+    x-apievangelist-consequence: physical
+    x-apievangelist-irreversible: true
+    x-apievangelist-note: >-
+      Highest-consequence operation in the published surface — sends to an entire
+      audience and bills per recipient. Cancellation is a separate operation
+      (POST /campaigns/{id}/cancel) and only applies while SCHEDULED or SENDING.
+      No idempotency key is accepted on this route.
+- target: $.components.schemas.LegacyError
+  update:
+    x-apievangelist-note: >-
+      Documented inconsistency, not a bug in this spec. POST /contacts,
+      POST /templates and POST /segments return a bare {"error": "<string>"} with
+      400 for missing required fields, while every other failure — including 404,
+      409 and domain verification on those same routes — uses the standard
+      envelope. Clients must branch on shape for these three routes.
+- target: $.components.schemas.Campaign
+  update:
+    x-apievangelist-note: >-
+      `type` (TRANSACTIONAL | MARKETING | HEADLESS) is the content class and
+      controls unsubscribe-footer injection; `audienceType`
+      (ALL | SEGMENT | FILTERED) is who receives it. They are unrelated despite
+      the similar names.
+- target: $.components.schemas.Contact
+  update:
+    x-apievangelist-natural-key: email
+    x-apievangelist-note: >-
+      createContact is an upsert keyed on email, returning _meta.isNew and
+      _meta.isUpdate. Custom fields live in the open `data` object and are
+      introspectable via GET /contacts/fields, which reports inferred types and
+      coverage percentages.

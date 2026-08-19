@@ -1,14 +1,98 @@
-generated: '2026-07-11'
-method: derived
-source: openapi/plunk-openapi.yml
+generated: '2026-08-13'
+method: searched
+source: openapi/_original/plunk-api-openapi.json
+docs: https://docs.useplunk.com/guides/api-keys
+supersedes: >-
+  The 2026-07-11 derived pass, which read the hand-authored spec and reported a
+  single unqualified `bearerAuth` scheme. Plunk's published OpenAPI and its API
+  keys guide document a two-key model where the key PREFIX determines which
+  endpoints a credential may call — that split is the whole auth model and was
+  invisible in the derived file.
 summary:
-  types:
-  - http
+  types: [http]
+  schemes: [bearer]
+  api_key_in: [header]
+  oauth2_flows: []
+  key_classes: 2
 schemes:
-- name: bearerAuth
+- name: ApiKeyAuth
   type: http
   scheme: bearer
-  description: Plunk API key passed as a Bearer token. Use a secret key (sk_) for most endpoints;
-    the /track endpoint additionally accepts a public key (pk_).
+  bearerFormat: API Key
+  header: Authorization
+  format: "Bearer <key>"
+  description: >-
+    API key authentication. The project is derived automatically from the key,
+    so no project identifier appears on any request. /v1/track requires a public
+    key (pk_*) and rejects a secret key with 401; every other endpoint requires a
+    secret key (sk_*) and rejects a public key with 401. The two key types are
+    not interchangeable in either direction.
   sources:
-  - openapi/plunk-openapi.yml
+  - openapi/_original/plunk-api-openapi.json
+  applied: global
+  applied_note: The spec declares security ApiKeyAuth at the document root, applying to every operation.
+key_classes:
+- class: secret
+  prefix: 'sk_'
+  scope: >-
+    Every endpoint except POST /v1/track — sending email, contacts, segments,
+    campaigns, templates, workflows, domains, billing.
+  placement: server-side only
+  guidance: >-
+    Store in environment variables or the platform secret store. Never bundle
+    into a frontend build.
+- class: public
+  prefix: 'pk_'
+  scope: POST /v1/track only
+  placement: browser and mobile client code
+  guidance: >-
+    Deliberately limited so events can be recorded from a client without
+    exposing the project's full API surface. Treat as semi-sensitive and rotate
+    if the tracking endpoint is being abused.
+mismatch_behavior:
+  status: 401
+  code: INVALID_API_KEY
+  message_example: 'Invalid secret API key. This endpoint requires a secret key (sk_*), not a public key.'
+missing_credential:
+  status: 401
+  code: MISSING_AUTH
+rotation:
+  endpoint: "POST /users/@me/projects/{id}/regenerate-keys"
+  console: Settings -> API Keys
+  granularity: pair
+  granularity_note: >-
+    The two keys rotate together. There is no way to rotate one without
+    invalidating the other, and there is no grace period — the old keys stop
+    working immediately, so every consumer must be updated in one window.
+  recommended_triggers: [key committed to a public repository, offboarding a contractor, revoking a deployment, periodic rotation policy]
+compromise_playbook:
+  source: https://docs.useplunk.com/guides/api-keys
+  steps:
+  - Rotate immediately.
+  - Audit the Activity tab for unexpected sends, contact mutations or campaign changes during the exposure window.
+  - Check Billing -> Consumption for usage spikes.
+  - Report unauthorized activity to support with the request IDs from the suspicious entries.
+environment_separation:
+  test_mode: false
+  note: >-
+    There is NO test/live key split. pk_/sk_ is a capability split, not an
+    environment split, and Plunk publishes no sandbox or test-mode credentials.
+    The documented practice is to run separate Plunk PROJECTS for staging and
+    production so a leaked staging key cannot touch production data. This is why
+    no sandbox/ artifact exists in this repo.
+oauth:
+  api_oauth: false
+  console_oauth: true
+  console_providers: [github, google]
+  console_note: >-
+    GET /auth/oauth-config reports which OAuth providers are configured, and
+    https://next-api.useplunk.com/config confirms github and google are enabled
+    on the hosted service. This is human sign-in to the dashboard, not API
+    authorization — there is no authorization server, no scopes and no token
+    endpoint, which is why scopes/ is deliberately absent.
+self_hosting:
+  note: >-
+    Self-hosted deployments issue their own key pairs per project against their
+    own base URL; the model is identical because it is the same AGPL-3.0
+    codebase.
+  docs: https://docs.useplunk.com/self-hosting/introduction

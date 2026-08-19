@@ -1,0 +1,183 @@
+generated: '2026-08-13'
+method: searched
+source: https://docs.useplunk.com/guides/webhooks
+spec_type: none
+asyncapi_published: false
+asyncapi_note: >-
+  Plunk publishes no AsyncAPI document and no /asyncapi.yaml on any host. What it
+  does publish is a fully documented event catalogue with per-event payload
+  schemas, captured here as a Webhooks artifact. This SUPERSEDES the finding in
+  review.yml (2026-06-20), which recorded "no event surface" — that was correct
+  for the transport question (there is still no WebSocket or SSE endpoint) but
+  wrong about eventing: Plunk emits real outbound HTTP events.
+
+delivery_model:
+  kind: workflow-step
+  note: >-
+    UNUSUAL SHAPE — read this before treating Plunk like a conventional webhook
+    provider. There is no webhook subscription endpoint and no webhook registry.
+    A webhook in Plunk is a WEBHOOK step inside a workflow: you create a workflow
+    triggered by an event, then add a Webhook step that fires an HTTP request to
+    your URL. Any event that can trigger a workflow can therefore be forwarded,
+    including your own custom tracked events — which makes Plunk usable as an
+    event router.
+  configuration:
+    url: {templated: true, note: "Supports {{variable}} interpolation, but the scheme (http:// or https://) must be literal."}
+    method: {default: POST, allowed: [GET, POST, PUT, PATCH, DELETE], templated: false}
+    headers: {optional: true, format: JSON object, note: Values support variable interpolation.}
+    body: {optional: true, note: "When omitted Plunk sends the default payload. When provided it REPLACES the default payload entirely and is JSON-encoded."}
+  content_type: application/json
+  timeout_seconds: 10
+  redirects: {followed: true, max: 5, note: Each hop is re-validated against the SSRF rules.}
+  retries: false
+  retries_note: >-
+    NO AUTOMATIC RETRIES. A non-2xx response or a timeout fails the workflow
+    step outright. Build idempotency into the receiving handler and use workflow
+    logic (a WAIT_FOR_EVENT step, a fallback branch) if retry semantics are
+    needed. Endpoints should accept, queue, and return 2xx quickly.
+  ssrf_protection: true
+  ssrf_note: >-
+    The target must be reachable on the public internet. Loopback and RFC 1918
+    ranges are refused. IPv6 transition addresses were closed as a bypass in
+    v0.13.0 (2026-08-09).
+  schemes: [http, https]
+
+authenticity:
+  signature: false
+  signature_note: >-
+    GAP. Plunk does NOT sign webhook payloads — there is no HMAC signature
+    header, no timestamp, no signing secret, and therefore no replay protection.
+  recommended_mechanism: shared secret in a configured request header
+  recommended_example: '{"Authorization": "Bearer your-shared-secret"}'
+  ip_allowlist: discouraged
+  ip_allowlist_note: The docs explicitly prefer a shared secret over IP allowlisting because egress IPs can change.
+
+correlation:
+  field: event.emailId
+  note: >-
+    Every email event carries emailId, matching the Plunk email record ID
+    returned by POST /v1/send. This lets a consumer join webhook events to the
+    originating API call directly, rather than matching on contact email plus
+    timestamp or listening for email.sent just to capture the provider
+    messageId. Added in v0.9.0 (2026-04-20), closing issue #344.
+
+default_payload:
+  shape:
+    contact: {email: string, subscribed: boolean, data: object}
+    workflow: {id: string, name: string}
+    execution: {id: string, startedAt: date-time}
+    event: object
+  note: The event object's contents depend on the event type; see events[] below.
+
+events:
+- name: email.sent
+  category: email
+  description: An email was successfully sent.
+  manually_trackable: false
+  data: [subject, from, fromName, messageId, emailId, templateId, campaignId, sourceType, sentAt]
+- name: email.delivery
+  category: email
+  description: An email was delivered to the recipient.
+  manually_trackable: false
+  data: [subject, from, fromName, messageId, emailId, templateId, campaignId, sourceType, deliveredAt]
+- name: email.open
+  category: email
+  description: A contact opened an email for the first time.
+  manually_trackable: false
+  data: [subject, from, fromName, messageId, emailId, templateId, campaignId, sourceType, openedAt, opens, isFirstOpen]
+- name: email.click
+  category: email
+  description: A contact clicked a link in an email for the first time.
+  manually_trackable: false
+  data: [subject, from, fromName, messageId, emailId, templateId, campaignId, sourceType, link, clickedAt, clicks, isFirstClick]
+- name: email.bounce
+  category: email
+  description: An email bounced, hard or soft.
+  manually_trackable: false
+  data: [subject, from, fromName, messageId, emailId, templateId, campaignId, sourceType, bounceType, bouncedAt, transientBounce]
+  note: >-
+    bounceType is Permanent or Transient. Only Permanent bounces count toward the
+    project bounce rate and trigger automatic unsubscription; Transient (mailbox
+    full, out-of-office, greylist) are tracked for visibility only and carry
+    transientBounce true instead of bouncedAt.
+- name: email.complaint
+  category: email
+  description: A contact marked an email as spam.
+  manually_trackable: false
+  data: [subject, from, fromName, messageId, emailId, templateId, campaignId, sourceType, complainedAt]
+- name: email.received
+  category: email
+  description: An email was received at your verified domain (requires inbound email setup).
+  manually_trackable: false
+  data: [messageId, from, fromHeader, to, subject, timestamp, recipients, hasContent, body, spamVerdict, virusVerdict, spfVerdict, dkimVerdict, dmarcVerdict, processingTimeMillis]
+  note: >-
+    The richest payload in the catalogue. spamVerdict / virusVerdict are PASS,
+    FAIL, GRAY or PROCESSING_FAILED; spf/dkim/dmarcVerdict carry the
+    authentication results. body is the sanitized HTML (or plain text).
+  docs: https://docs.useplunk.com/guides/receiving-emails
+- name: contact.subscribed
+  category: contact
+  description: A contact's subscription status changed to subscribed.
+  manually_trackable: false
+  data: []
+  note: Carries no event data; event is an empty object.
+- name: contact.unsubscribed
+  category: contact
+  description: A contact's subscription status changed to unsubscribed.
+  manually_trackable: false
+  data: [reason]
+  note: >-
+    Normally an empty object. When the unsubscription was triggered
+    automatically by a bounce or complaint, event carries reason, one of
+    "bounce" or "complaint".
+- name: segment.<name>.entry
+  category: segment
+  description: A contact entered a segment.
+  manually_trackable: false
+  data: [segmentId, segmentName]
+  note: >-
+    <name> is a slugified segment name — a segment called "VIP Users" produces
+    segment.vip-users.entry and segment.vip-users.exit. Entry/exit events only
+    fire for tracked dynamic segments; POST /segments/{id}/compute recomputes
+    membership and fires them, while POST /segments/{id}/refresh does a cheap
+    count refresh with no events.
+- name: segment.<name>.exit
+  category: segment
+  description: A contact exited a segment.
+  manually_trackable: false
+  data: [segmentId, segmentName]
+- name: <custom>
+  category: custom
+  description: Any event name your application tracks via POST /v1/track.
+  manually_trackable: true
+  data: [whatever was passed in the data field on track]
+  note: >-
+    Custom events are first-class workflow triggers, so any application event
+    can be routed back out through a webhook step.
+
+workflow_step_types:
+  note: The step vocabulary a webhook sits inside, from the API reference.
+  types: [SEND_EMAIL, DELAY, WAIT_FOR_EVENT, CONDITION, WEBHOOK, UPDATE_CONTACT, EXIT]
+
+inbound_webhooks:
+  note: >-
+    Endpoints Plunk EXPOSES to receive events from its own infrastructure. Not
+    callable by API consumers; listed in the reference for self-hosters.
+  endpoints:
+  - {method: POST, path: /webhooks/sns, source: AWS SES/SNS, note: SNS signature verification added in v0.9.0.}
+  - {method: POST, path: /webhooks/incoming/stripe, source: Stripe billing}
+
+streaming:
+  websocket: false
+  sse: false
+  note: >-
+    Confirmed still absent, consistent with review.yml. There is no wss:// or
+    Server-Sent Events surface; all eventing is outbound HTTP.
+
+summary:
+  event_count: 12
+  event_families: [email, contact, segment, custom]
+  signed: false
+  retries: false
+  asyncapi_spec: false
+  subscription_api: false

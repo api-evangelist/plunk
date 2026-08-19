@@ -1,0 +1,118 @@
+generated: '2026-08-13'
+method: searched
+source: >-
+  https://docs.useplunk.com/api-reference/overview,
+  https://github.com/useplunk/plunk/releases,
+  https://status.useplunk.com
+versioning:
+  scheme: split
+  public_api:
+    style: uri-path
+    current: v1
+    paths: [POST /v1/send, POST /v1/track, POST /v1/verify]
+  dashboard_api:
+    style: unversioned
+    note: >-
+      The resource routes (/contacts, /templates, /campaigns, /segments,
+      /workflows, /events, /domains, /activity, /analytics) carry no version
+      segment. There is no published policy governing how they change.
+  platform:
+    style: semver
+    current: v0.13.0
+    released: '2026-08-09'
+    automation: release-please
+    source: https://github.com/useplunk/plunk/releases
+    note: >-
+      Because Plunk is AGPL-3.0 and self-hostable, the platform version is the
+      real versioning surface. Every change to the API arrives in a tagged,
+      dated GitHub release with a generated changelog. Hosted customers do not
+      pin a version.
+  docs: https://docs.useplunk.com/api-reference/overview
+
+deprecation:
+  policy_url: null
+  policy_published: false
+  sunset_header: false
+  deprecation_header: false
+  note: >-
+    Checked and absent. Plunk publishes no deprecation policy, no sunset
+    schedule, and no RFC 8594 Sunset/Deprecation header support. No operation in
+    the published OpenAPI carries deprecated: true. The nearest thing to a
+    deprecation signal is the base-URL migration below, which is announced only
+    by the docs changing — no header, no notice period, no dated removal.
+    No `Deprecation` pointer is emitted in apis.yml; this is a recorded absence.
+
+base_url_migration:
+  observed: true
+  legacy_host: https://api.useplunk.com
+  current_host: https://next-api.useplunk.com
+  declared_in: openapi/_original/plunk-api-openapi.json (servers[0]) and https://docs.useplunk.com/api-reference/overview
+  legacy_status: live
+  evidence:
+  - {url: 'https://next-api.useplunk.com/config', status: 200, note: 'Returns environment=production and urls.api=https://next-api.useplunk.com'}
+  - {url: 'https://api.useplunk.com/openapi.json', status: 404, note: 'Legacy host still answers with the Plunk JSON 404 envelope, so it is alive and serving.'}
+  note: >-
+    The API reference and the published OpenAPI both name next-api.useplunk.com
+    as THE base URL, and next-api.useplunk.com/config self-identifies as the
+    production API. The legacy api.useplunk.com host is still live and is still
+    the host used in the code samples on the idempotency guide — the docs
+    themselves are internally inconsistent about which host to call. No
+    migration notice, cutover date or deprecation header accompanies the change.
+    Recorded as a finding, not resolved: apis.yml keeps api.useplunk.com on the
+    existing API entries and adds next-api.useplunk.com on the entry for the
+    published OpenAPI, because that is what each source actually says.
+
+deprecated_operations: []
+
+status_page:
+  url: https://status.useplunk.com
+  status: 200
+  verified: probed
+  machine_readable_summary: false
+  machine_readable_note: >-
+    The page is a rendered status dashboard with an RSS feed (./rss.xml). No
+    Statuspage-style /api/v2/status.json is served anonymously — that path
+    returns 401 UNAUTHORIZED. Referenced from the docs error reference as the
+    place to check before contacting support.
+  rss: https://status.useplunk.com/rss.xml
+
+sla:
+  url: null
+  uptime_target: null
+  note: >-
+    No SLA or uptime commitment is published. Consistent with the pricing model
+    — there is no enterprise tier to attach one to.
+
+support:
+  discord: https://www.useplunk.com/discord
+  github_issues: https://github.com/useplunk/plunk/issues
+  note: >-
+    Support runs through Discord and the public GitHub issue tracker (40 open at
+    the time of this pass). Error responses instruct callers to quote
+    error.requestId when contacting support.
+
+data_retention:
+  docs: https://docs.useplunk.com/guides/data-retention
+  policies:
+  - {data: Email metadata and metrics, kept: indefinitely}
+  - {data: Rendered email HTML body, kept: 90 days, after: Body is cleared; the email row remains. Irreversible.}
+  - {data: API request logs, kept: 30 days, after: Log entry deleted}
+  - {data: Idempotency keys, kept: 24 hours, after: Key deleted and becomes reusable, configurable: IDEMPOTENCY_KEY_TTL_HOURS}
+  note: >-
+    A published, dated retention schedule with the enforcing job cadence
+    (email-body cleanup daily 04:00, request-log cleanup daily 03:00,
+    idempotency-key cleanup hourly). Unusually specific for a company this size,
+    and directly relevant to self-hosters, who must run the worker process or
+    storage grows without bound.
+
+open_source:
+  license: AGPL-3.0
+  repository: https://github.com/useplunk/plunk
+  stars: 5363
+  default_branch: next
+  self_hosting: https://docs.useplunk.com/self-hosting/introduction
+  note: >-
+    The exit path from the hosted service is the source itself: the whole
+    platform deploys with Docker Compose. That is the practical substitute for a
+    deprecation policy — a hosted change a customer dislikes can be pinned by
+    self-hosting a tagged release.

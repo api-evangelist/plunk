@@ -1,0 +1,37 @@
+generated: '2026-08-13'
+method: generated
+source: >-
+  Grounded in openapi/_original/plunk-api-openapi.json (every operationId below
+  is verbatim from the published spec) plus conventions/plunk-conventions.yml,
+  errors/plunk-problem-types.yml and asyncapi/plunk-webhooks.yml.
+note: >-
+  Plunk publishes no AGENTS.md and no provider-authored skill files — searched
+  the docs site, both llms.txt files and the GitHub organization. These are
+  API Evangelist skills generated from Plunk's own contract and documentation.
+api: openapi/_original/plunk-api-openapi.json
+base_url: https://next-api.useplunk.com
+skills:
+- file: plunk-send-transactional-email.md
+  name: Send a transactional email with Plunk
+  description: Send a one-off transactional email safely — key class, idempotency, billing backpressure, and correlating the send with the delivery events that follow.
+  operations: [sendEmail]
+- file: plunk-track-event-and-upsert-contact.md
+  name: Track an event and upsert a contact in Plunk
+  description: Record an application event against a contact from client or server code, creating the contact and triggering any matching workflow.
+  operations: [trackEvent, createContact, getContact, listContacts]
+- file: plunk-create-and-send-campaign.md
+  name: Create and send a Plunk campaign to a segment
+  description: Build an audience segment, create a campaign against it, test it, then send or schedule it — with the confirmation and cost checks a broadcast deserves.
+  operations: [createSegment, listSegments, createTemplate, listTemplates, createCampaign, listCampaigns, sendCampaign]
+- file: plunk-receive-webhook-events.md
+  name: Receive Plunk webhook events in your application
+  description: Wire Plunk's workflow-based webhooks into your own service — build the receiver correctly given no signing and no retries, and correlate every event back to its send.
+  operations: [sendEmail, trackEvent]
+coverage:
+  spec_operations: 15
+  operations_referenced: 12
+  unreferenced: [verifyEmail, updateContact, deleteContact]
+  unreferenced_note: >-
+    verifyEmail is a single-shot validation call needing no operating
+    instructions; updateContact and deleteContact are covered inline in the
+    contact skill rather than given their own file.
