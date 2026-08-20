@@ -31,6 +31,19 @@ tags:
 - Transactional Email
 - Marketing
 - Automation
+- Open-Source
+- Software-as-a-Service
+- Email API
+- Webhook
+- Segmentation
+- Workflow-Automation
+- Self-Hosted
+- Developer Tools
+tags_raw:
+- Email
+- Transactional Email
+- Marketing
+- Automation
 - Open Source
 - SaaS
 - Email API
@@ -144,6 +157,8 @@ apis:
   humanURL: https://docs.useplunk.com/api-reference/transactional/send
   baseURL: https://api.useplunk.com/v1
   tags:
+  - Event
+  tags_raw:
   - Events
   properties:
   - type: OpenAPI
