@@ -56,49 +56,6 @@ created: '2026-06-20'
 modified: '2026-08-13'
 specificationVersion: '0.23'
 apis:
-- aid: plunk:plunk-api
-  name: Plunk API
-  description: >-
-    Plunk's own published OpenAPI 3.1.0, served at https://docs.useplunk.com/openapi.json
-    and declaring https://next-api.useplunk.com as the production base URL. Covers the
-    public API (transactional send, event tracking, email verification) plus the contacts,
-    templates, campaigns and segments resources. Authenticated with a Bearer API key whose
-    prefix decides its capability — sk_ for every endpoint except POST /v1/track, which
-    requires pk_. POST /v1/send and POST /v1/track accept an Idempotency-Key header. Lists
-    are cursor paginated. This is the first-party contract; the four hand-authored specs
-    below predate it and cover the older api.useplunk.com surface.
-  humanURL: https://docs.useplunk.com/api-reference/overview
-  baseURL: https://next-api.useplunk.com
-  tags:
-  - Email
-  - Transactional
-  - Contacts
-  - Campaigns
-  - Segments
-  - Templates
-  properties:
-  - type: OpenAPI
-    url: openapi/_original/plunk-api-openapi.json
-  - type: Overlay
-    url: overlays/plunk-api-overlay.yaml
-  - type: Documentation
-    url: https://docs.useplunk.com/api-reference/overview
-  - type: APIReference
-    url: https://docs.useplunk.com/api-reference/overview
-  - type: Authentication
-    url: https://docs.useplunk.com/guides/api-keys
-  - type: Idempotency
-    url: https://docs.useplunk.com/guides/idempotency
-  - type: ErrorCatalog
-    url: https://docs.useplunk.com/api-reference/errors
-  - type: Webhooks
-    url: https://docs.useplunk.com/guides/webhooks
-  - type: DataModel
-    url: data-model/plunk-data-model.yml
-  - type: AgentSkill
-    url: skills/_index.yml
-  - type: GitHub
-    url: https://github.com/useplunk/plunk
 - aid: plunk:plunk-campaigns-api
   name: Plunk Campaigns API
   description: Create and send marketing campaigns.
