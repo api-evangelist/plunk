@@ -12,6 +12,19 @@ description: Plunk is an open-source (AGPL-3.0) email platform for developers th
   envelope carrying machine codes plus remediation hints, and a documented webhook event
   catalogue delivered as workflow steps. Every documentation page is also served as Markdown.
   The entire stack self-hosts with Docker Compose for full data ownership and no per-email costs.
+deliveryModel:
+  model: unknown
+  open_source: unknown
+  commercial: true
+  callable_host: true
+  label: Delivery model not determined — needs a product licence on record
+  confidence: low
+  source:
+  - openapi
+  - pricing
+  - repository-unlicensed
+  generated: '2026-08-28'
+  method: derived
 accessModel:
   pricing: freemium
   onboarding: open
