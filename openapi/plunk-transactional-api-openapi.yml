@@ -1,6 +1,6 @@
-openapi: 3.0.1
+openapi: 3.2.0
 info:
-  title: Plunk Campaigns Transactional API
+  title: Plunk Transactional API
   description: 'The Plunk REST API for the open-source email platform for SaaS. Plunk unifies transactional email (send), event tracking for automations (track), contact / subscriber management, and marketing campaigns behind a single Bearer-authenticated API. Public API routes under /v1 return a wrapped envelope ({"success": true, "data": ...}); most routes require a secret key (sk_), while /v1/track may also be called with a public key (pk_) for client-side use. The same API is served by the hosted platform and by self-hosted (AGPL-3.0) deployments.'
   termsOfService: https://www.useplunk.com/legal/terms
   contact:
@@ -52,6 +52,25 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
 components:
+  responses:
+    Unauthorized:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ValidationError:
+      description: The request body failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimited:
+      description: Too many requests; the project rate limit was exceeded.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
     SendEmailResponse:
       type: object
@@ -75,20 +94,6 @@ components:
         timestamp:
           type: string
           format: date-time
-    Error:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: false
-        code:
-          type: integer
-        error:
-          type: string
-        message:
-          type: string
-        time:
-          type: integer
     SendEmailRequest:
       type: object
       required:
@@ -144,25 +149,20 @@ components:
               type:
                 type: string
                 description: MIME type of the attachment.
-  responses:
-    ValidationError:
-      description: The request body failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Missing or invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    RateLimited:
-      description: Too many requests; the project rate limit was exceeded.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        time:
+          type: integer
   securitySchemes:
     bearerAuth:
       type: http

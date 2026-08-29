@@ -1,56 +1,224 @@
-openapi: 3.0.1
+openapi: 3.2.0
 info:
   title: Plunk Campaigns API
-  description: 'The Plunk REST API for the open-source email platform for SaaS. Plunk unifies transactional email (send), event tracking for automations (track), contact / subscriber management, and marketing campaigns behind a single Bearer-authenticated API. Public API routes under /v1 return a wrapped envelope ({"success": true, "data": ...}); most routes require a secret key (sk_), while /v1/track may also be called with a public key (pk_) for client-side use. The same API is served by the hosted platform and by self-hosted (AGPL-3.0) deployments.'
-  termsOfService: https://www.useplunk.com/legal/terms
-  contact:
-    name: Plunk Support
-    url: https://docs.useplunk.com
-  license:
-    name: AGPL-3.0
-    url: https://github.com/useplunk/plunk/blob/main/LICENSE
   version: '1.0'
+  description: 'Operations tagged Campaigns across 2 of this provider''s published API definitions: plunk-api-openapi.json, plunk-openapi.yml. Each path carries the servers of the definition it was published in.'
 servers:
+- url: https://next-api.useplunk.com
+  description: Production server
 - url: https://api.useplunk.com/v1
   description: Plunk hosted API
-security:
-- bearerAuth: []
 tags:
 - name: Campaigns
-  description: Create and send marketing campaigns.
+  description: Email campaign management
 paths:
   /campaigns:
-    post:
-      operationId: createCampaign
+    get:
       tags:
       - Campaigns
-      summary: Create a campaign
-      description: Creates a one-off marketing campaign with a subject, HTML body, optional styling, and an explicit list of recipients.
+      summary: List campaigns
+      description: 'Get a paginated list of email campaigns.
+
+
+        This endpoint uses **offset pagination** (`page` / `pageSize`), not the cursor pagination used by `GET /contacts`.'
+      operationId: listCampaigns
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PageSize'
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - DRAFT
+          - SCHEDULED
+          - SENDING
+          - SENT
+          - CANCELLED
+        description: Filter by campaign status. An unrecognised value returns `400`.
+      - name: search
+        in: query
+        schema:
+          type: string
+        description: Case-insensitive match on name, subject, or sender address.
+      - name: sort
+        in: query
+        schema:
+          type: string
+          enum:
+          - name
+          - createdAt
+          - updatedAt
+          default: createdAt
+        description: Column to sort by. Unrecognised values fall back to `createdAt`.
+      - $ref: '#/components/parameters/SortDirection'
+      responses:
+        '200':
+          description: List of campaigns
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Campaign'
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+                  total:
+                    type: integer
+                    description: Total campaigns matching the filters, across all pages.
+                  totalPages:
+                    type: integer
+        '400':
+          description: Invalid `status` value.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
       security:
-      - bearerAuth: []
+      - ApiKeyAuth: []
+    post:
+      tags:
+      - Campaigns
+      summary: Create campaign
+      description: 'Create a new email campaign. Campaigns are created as `DRAFT`; use `POST /campaigns/{id}/send` to send or schedule one.
+
+
+        The sender domain must already be verified for this project.
+
+
+        **Audience:** `audienceType` decides which companion field is required — `SEGMENT` requires `segmentId`, `FILTERED` requires `audienceCondition`, and `ALL` requires neither.'
+      operationId: createCampaign
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateCampaignRequest'
-            example:
-              subject: Product launch
-              body: <p>We just shipped something new.</p>
-              recipients:
-              - user@example.com
-              style: PLUNK
+              type: object
+              required:
+              - name
+              - subject
+              - body
+              - from
+              - audienceType
+              properties:
+                name:
+                  type: string
+                  description: Campaign name
+                description:
+                  type: string
+                  description: Campaign description
+                subject:
+                  type: string
+                  description: Email subject line
+                body:
+                  type: string
+                  description: HTML email body
+                from:
+                  type: string
+                  format: email
+                  description: Sender email address (must be from verified domain)
+                fromName:
+                  type: string
+                  description: Sender name
+                replyTo:
+                  type: string
+                  format: email
+                  description: Reply-to email address
+                type:
+                  type: string
+                  enum:
+                  - TRANSACTIONAL
+                  - MARKETING
+                  - HEADLESS
+                  default: MARKETING
+                  description: Content type of the campaign email. Defaults to `MARKETING`.
+                audienceType:
+                  type: string
+                  enum:
+                  - ALL
+                  - SEGMENT
+                  - FILTERED
+                  description: Target audience type
+                segmentId:
+                  type: string
+                  format: uuid
+                  description: Segment ID. Required when `audienceType` is `SEGMENT`.
+                audienceCondition:
+                  allOf:
+                  - $ref: '#/components/schemas/FilterCondition'
+                  description: Audience filter tree. Required when `audienceType` is `FILTERED`. Same structure as a segment's `condition`.
+            examples:
+              allContacts:
+                summary: Send to every contact
+                value:
+                  name: March newsletter
+                  subject: What shipped in March
+                  body: <h1>Hello {{firstName}}</h1>
+                  from: news@example.com
+                  fromName: Example
+                  audienceType: ALL
+              segment:
+                summary: Send to a saved segment
+                value:
+                  name: Premium announcement
+                  subject: A new perk for premium users
+                  body: <h1>Hello {{firstName}}</h1>
+                  from: news@example.com
+                  audienceType: SEGMENT
+                  segmentId: 9c4d5e1f-2a3b-4c5d-8e9f-0a1b2c3d4e5f
+              filtered:
+                summary: Send to an ad-hoc filter
+                description: Premium users who signed up in the last 30 days.
+                value:
+                  name: New premium onboarding
+                  subject: Getting started
+                  body: <h1>Welcome {{firstName}}</h1>
+                  from: news@example.com
+                  audienceType: FILTERED
+                  audienceCondition:
+                    logic: AND
+                    groups:
+                    - filters:
+                      - field: data.plan
+                        operator: equals
+                        value: premium
+                      - field: createdAt
+                        operator: within
+                        value: 30
+                        unit: days
       responses:
-        '200':
-          description: The created campaign.
+        '201':
+          description: Campaign created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Campaign'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Campaign'
+        '400':
+          description: '`segmentId` missing for a `SEGMENT` campaign, or `audienceCondition` missing for a `FILTERED` campaign.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/UnverifiedDomain'
         '422':
           $ref: '#/components/responses/ValidationError'
+      security:
+      - ApiKeyAuth: []
     put:
       operationId: updateCampaign
       tags:
@@ -71,11 +239,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Campaign'
+                $ref: '#/components/schemas/Campaign_2'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized_2'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: '#/components/responses/NotFound_2'
     delete:
       operationId: deleteCampaign
       tags:
@@ -103,11 +271,91 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Campaign'
+                $ref: '#/components/schemas/Campaign_2'
+        '401':
+          $ref: '#/components/responses/Unauthorized_2'
+        '404':
+          $ref: '#/components/responses/NotFound_2'
+    servers:
+    - url: https://next-api.useplunk.com
+      description: Production server
+  /campaigns/{id}/send:
+    post:
+      tags:
+      - Campaigns
+      summary: Send or schedule campaign
+      description: Send a campaign immediately or schedule it for future delivery.
+      operationId: sendCampaign
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scheduledFor:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  description: Timestamp for when to send the campaign. Omit or set to null for immediate send. Any value `new Date()` can parse is accepted; an unparseable one returns `400`.
+            examples:
+              immediate:
+                summary: Send now
+                value: {}
+              scheduled:
+                summary: Schedule for later
+                value:
+                  scheduledFor: '2025-02-01T09:00:00.000Z'
+      responses:
+        '200':
+          description: Campaign scheduled or sending
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Campaign'
+                  message:
+                    type: string
+                    description: Human-readable confirmation, e.g. `Campaign is being sent`.
+              example:
+                success: true
+                data:
+                  id: 9c4d5e1f-2a3b-4c5d-8e9f-0a1b2c3d4e5f
+                  name: March newsletter
+                  status: SCHEDULED
+                  scheduledFor: '2025-02-01T09:00:00.000Z'
+                message: Campaign scheduled for 2025-02-01T09:00:00.000Z
+        '400':
+          description: Unparseable `scheduledFor`, or the campaign is not in a sendable state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          description: The campaign `id` in the path is not a valid UUID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - ApiKeyAuth: []
+    servers:
+    - url: https://next-api.useplunk.com
+      description: Production server
   /campaigns/send:
     post:
       operationId: sendCampaign
@@ -132,28 +380,312 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Campaign'
+                $ref: '#/components/schemas/Campaign_2'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized_2'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: '#/components/responses/NotFound_2'
+    servers:
+    - url: https://api.useplunk.com/v1
+      description: Plunk hosted API
 components:
+  responses:
+    UnverifiedDomain:
+      description: The sender domain is not registered to this project, or has not completed DNS verification. Add and verify the domain in your project settings first.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: INTERNAL_SERVER_ERROR
+              message: Domain "example.com" is not verified. Please complete the DNS verification process in your domain settings.
+              statusCode: 403
+              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
+            timestamp: '2025-01-15T10:30:00.000Z'
+    Unauthorized:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: INVALID_API_KEY
+              message: Invalid secret API key. This endpoint requires a secret key (sk_*), not a public key.
+              statusCode: 401
+              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
+            timestamp: '2025-01-15T10:30:00.000Z'
+    NotFound:
+      description: The requested resource does not exist in this project.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ValidationError:
+      description: Request body failed schema validation. `error.errors` lists the offending fields.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: VALIDATION_ERROR
+              message: Request validation failed
+              statusCode: 422
+              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
+              errors:
+              - field: to
+                message: Invalid email
+                code: invalid_string
+              suggestion: Please check the API documentation for the correct request format.
+            timestamp: '2025-01-15T10:30:00.000Z'
+    Unauthorized_2:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error_2'
+    NotFound_2:
+      description: The requested resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error_2'
+    ValidationError_2:
+      description: The request body failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error_2'
   schemas:
+    FilterGroup:
+      type: object
+      required:
+      - filters
+      properties:
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Filter'
+          description: Filters within a group are combined with AND.
+        conditions:
+          $ref: '#/components/schemas/FilterCondition'
+          description: Optional nested condition, allowing arbitrarily deep AND/OR trees.
+    Campaign:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        subject:
+          type: string
+        body:
+          type: string
+        from:
+          type: string
+          format: email
+        fromName:
+          type: string
+          nullable: true
+        replyTo:
+          type: string
+          format: email
+          nullable: true
+        type:
+          type: string
+          enum:
+          - TRANSACTIONAL
+          - MARKETING
+          - HEADLESS
+          description: Content type of the campaign email. Not to be confused with `audienceType`.
+        status:
+          type: string
+          enum:
+          - DRAFT
+          - SCHEDULED
+          - SENDING
+          - SENT
+          - CANCELLED
+        audienceType:
+          type: string
+          enum:
+          - ALL
+          - SEGMENT
+          - FILTERED
+        audienceCondition:
+          allOf:
+          - $ref: '#/components/schemas/FilterCondition'
+          nullable: true
+          description: Set when `audienceType` is `FILTERED`.
+        segmentId:
+          type: string
+          nullable: true
+          description: Set when `audienceType` is `SEGMENT`.
+        scheduledFor:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the campaign is scheduled to send. Null for immediate or unsent campaigns.
+        totalRecipients:
+          type: integer
+        sentCount:
+          type: integer
+        deliveredCount:
+          type: integer
+        openedCount:
+          type: integer
+        clickedCount:
+          type: integer
+        bouncedCount:
+          type: integer
+        projectId:
+          type: string
+        sentAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    FilterCondition:
+      type: object
+      required:
+      - logic
+      - groups
+      description: A boolean tree over contact filters. `logic` combines the `groups`; the filters inside each group are always ANDed together.
+      properties:
+        logic:
+          type: string
+          enum:
+          - AND
+          - OR
+        groups:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/FilterGroup'
+    FieldError:
+      type: object
+      properties:
+        field:
+          type: string
+          description: Dot-path of the offending field, e.g. `attachments.0.filename`.
+        message:
+          type: string
+        code:
+          type: string
+          description: Validation issue code, e.g. `invalid_type`, `too_big`, `reserved_event`.
+        received:
+          description: The value that was received, when available.
+    Filter:
+      type: object
+      required:
+      - field
+      - operator
+      properties:
+        field:
+          type: string
+          description: Contact field to test. Custom fields are addressed via the `data.` prefix (e.g. `data.plan`); standard fields are `email`, `subscribed`, `createdAt`. Event operators take an event name instead.
+        operator:
+          type: string
+          enum:
+          - equals
+          - notEquals
+          - contains
+          - notContains
+          - greaterThan
+          - lessThan
+          - greaterThanOrEqual
+          - lessThanOrEqual
+          - exists
+          - notExists
+          - within
+          - olderThan
+          - triggered
+          - triggeredWithin
+          - triggeredOlderThan
+          - notTriggered
+          - notTriggeredWithin
+          - memberOfSegment
+          - notMemberOfSegment
+        value:
+          description: Comparison value. Omitted for `exists` / `notExists` / `triggered` / `notTriggered`. For time-window operators this is the number of `unit`s.
+        unit:
+          type: string
+          enum:
+          - days
+          - hours
+          - minutes
+          description: Time unit for window operators (`within`, `olderThan`, `triggeredWithin`, `triggeredOlderThan`, `notTriggeredWithin`).
     Error:
       type: object
       properties:
         success:
           type: boolean
-          example: false
-        code:
-          type: integer
+          enum:
+          - false
         error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code, e.g. `VALIDATION_ERROR`, `INVALID_API_KEY`, `IDEMPOTENCY_KEY_REUSED`.
+            message:
+              type: string
+            statusCode:
+              type: integer
+            requestId:
+              type: string
+              description: Correlation ID for this request. Include it when contacting support.
+            errors:
+              type: array
+              items:
+                $ref: '#/components/schemas/FieldError'
+              description: Field-level detail, present on validation failures.
+            details:
+              type: object
+              additionalProperties: true
+              description: Additional error context.
+            suggestion:
+              type: string
+              description: Hint for fixing the request.
+        timestamp:
           type: string
-        message:
+          format: date-time
+    CreateCampaignRequest:
+      type: object
+      required:
+      - subject
+      - body
+      - recipients
+      properties:
+        subject:
           type: string
-        time:
-          type: integer
-    Campaign:
+        body:
+          type: string
+        recipients:
+          type: array
+          items:
+            type: string
+            format: email
+        style:
+          type: string
+          description: Email styling preset (e.g. PLUNK or HTML).
+          enum:
+          - PLUNK
+          - HTML
+    Campaign_2:
       type: object
       properties:
         id:
@@ -181,28 +713,20 @@ components:
         updatedAt:
           type: string
           format: date-time
-    CreateCampaignRequest:
+    SendCampaignRequest:
       type: object
       required:
-      - subject
-      - body
-      - recipients
+      - id
       properties:
-        subject:
+        id:
           type: string
-        body:
-          type: string
-        recipients:
-          type: array
-          items:
-            type: string
-            format: email
-        style:
-          type: string
-          description: Email styling preset (e.g. PLUNK or HTML).
-          enum:
-          - PLUNK
-          - HTML
+          description: The id of the campaign to send.
+        live:
+          type: boolean
+          description: When true the campaign is sent for real; when false a test send is performed.
+        delay:
+          type: integer
+          description: Optional delay in minutes before sending.
     UpdateCampaignRequest:
       type: object
       required:
@@ -221,41 +745,67 @@ components:
             format: email
         style:
           type: string
-    SendCampaignRequest:
+    Error_2:
       type: object
-      required:
-      - id
       properties:
-        id:
-          type: string
-          description: The id of the campaign to send.
-        live:
+        success:
           type: boolean
-          description: When true the campaign is sent for real; when false a test send is performed.
-        delay:
+          example: false
+        code:
           type: integer
-          description: Optional delay in minutes before sending.
-  responses:
-    ValidationError:
-      description: The request body failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Missing or invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: The requested resource was not found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+        error:
+          type: string
+        message:
+          type: string
+        time:
+          type: integer
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: 1-based page number.
+    PageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 20
+      description: Items per page.
+    SortDirection:
+      name: dir
+      in: query
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+        default: desc
+      description: Sort direction. Unrecognised values fall back to the default.
   securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
+      description: 'API Key authentication. The project is automatically derived from the key.
+
+
+        **`/v1/track` requires a public key (`pk_*`)** — it is the one endpoint intended for client-side use, and a secret key is rejected there with `401`.
+
+
+        **Every other endpoint requires a secret key (`sk_*`)** and rejects public keys with `401`.
+
+
+        So the two key types are not interchangeable in either direction: pick the key that matches the endpoint you are calling.'
     bearerAuth:
       type: http
       scheme: bearer
       description: Plunk API key passed as a Bearer token. Use a secret key (sk_) for most endpoints; the /track endpoint additionally accepts a public key (pk_).
+x-refined-from:
+- plunk-api-openapi.json
+- plunk-openapi.yml
+x-ext-urls: {}

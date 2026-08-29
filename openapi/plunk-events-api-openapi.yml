@@ -1,6 +1,6 @@
-openapi: 3.0.1
+openapi: 3.2.0
 info:
-  title: Plunk Campaigns Events API
+  title: Plunk Events API
   description: 'The Plunk REST API for the open-source email platform for SaaS. Plunk unifies transactional email (send), event tracking for automations (track), contact / subscriber management, and marketing campaigns behind a single Bearer-authenticated API. Public API routes under /v1 return a wrapped envelope ({"success": true, "data": ...}); most routes require a secret key (sk_), while /v1/track may also be called with a public key (pk_) for client-side use. The same API is served by the hosted platform and by self-hosted (AGPL-3.0) deployments.'
   termsOfService: https://www.useplunk.com/legal/terms
   contact:
@@ -54,21 +54,40 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
 components:
+  responses:
+    Unauthorized:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ValidationError:
+      description: The request body failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimited:
+      description: Too many requests; the project rate limit was exceeded.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
-    Error:
+    TrackEventResponse:
       type: object
       properties:
         success:
           type: boolean
-          example: false
-        code:
-          type: integer
-        error:
+        contact:
           type: string
-        message:
+          description: The id of the contact.
+        event:
           type: string
-        time:
-          type: integer
+          description: The id of the recorded event.
+        timestamp:
+          type: string
+          format: date-time
     TrackEventRequest:
       type: object
       required:
@@ -89,39 +108,20 @@ components:
           type: object
           additionalProperties: true
           description: Arbitrary metadata stored on the contact.
-    TrackEventResponse:
+    Error:
       type: object
       properties:
         success:
           type: boolean
-        contact:
+          example: false
+        code:
+          type: integer
+        error:
           type: string
-          description: The id of the contact.
-        event:
+        message:
           type: string
-          description: The id of the recorded event.
-        timestamp:
-          type: string
-          format: date-time
-  responses:
-    ValidationError:
-      description: The request body failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Missing or invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    RateLimited:
-      description: Too many requests; the project rate limit was exceeded.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+        time:
+          type: integer
   securitySchemes:
     bearerAuth:
       type: http

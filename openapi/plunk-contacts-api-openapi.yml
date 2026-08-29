@@ -1,75 +1,148 @@
-openapi: 3.0.1
+openapi: 3.2.0
 info:
-  title: Plunk Campaigns Contacts API
-  description: 'The Plunk REST API for the open-source email platform for SaaS. Plunk unifies transactional email (send), event tracking for automations (track), contact / subscriber management, and marketing campaigns behind a single Bearer-authenticated API. Public API routes under /v1 return a wrapped envelope ({"success": true, "data": ...}); most routes require a secret key (sk_), while /v1/track may also be called with a public key (pk_) for client-side use. The same API is served by the hosted platform and by self-hosted (AGPL-3.0) deployments.'
-  termsOfService: https://www.useplunk.com/legal/terms
-  contact:
-    name: Plunk Support
-    url: https://docs.useplunk.com
-  license:
-    name: AGPL-3.0
-    url: https://github.com/useplunk/plunk/blob/main/LICENSE
+  title: Plunk Contacts API
   version: '1.0'
+  description: 'Operations tagged Contacts across 2 of this provider''s published API definitions: plunk-api-openapi.json, plunk-openapi.yml. Each path carries the servers of the definition it was published in.'
 servers:
+- url: https://next-api.useplunk.com
+  description: Production server
 - url: https://api.useplunk.com/v1
   description: Plunk hosted API
-security:
-- bearerAuth: []
 tags:
 - name: Contacts
-  description: Manage contacts and their subscription state.
+  description: Contact management operations
 paths:
   /contacts:
     get:
-      operationId: getContacts
       tags:
       - Contacts
-      summary: List all contacts
-      description: Returns every contact in the project.
-      security:
-      - bearerAuth: []
+      summary: List contacts
+      description: Get a paginated list of contacts with cursor-based pagination.
+      operationId: listContacts
+      parameters:
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Cursor'
+      - name: search
+        in: query
+        schema:
+          type: string
+        description: Case-insensitive substring match on email.
+      - name: subscribed
+        in: query
+        schema:
+          type: boolean
+        description: Filter by subscription state. Omit to return both subscribed and unsubscribed contacts.
+      - name: sort
+        in: query
+        schema:
+          type: string
+          enum:
+          - email
+          - createdAt
+          default: createdAt
+        description: Column to sort by. Unrecognised values fall back to `createdAt`.
+      - $ref: '#/components/parameters/SortDirection'
       responses:
         '200':
-          description: A list of contacts.
+          description: List of contacts
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Contact'
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Contact'
+                  cursor:
+                    type: string
+                    nullable: true
+                    description: Cursor for the next page. Pass this back as the `cursor` query parameter to fetch the next page.
+                  hasMore:
+                    type: boolean
+                  total:
+                    type: integer
+                    description: Total count. Only populated on the first page (when no `cursor` is supplied); subsequent pages return `0` to avoid the recount cost.
         '401':
           $ref: '#/components/responses/Unauthorized'
+      security:
+      - ApiKeyAuth: []
     post:
-      operationId: createContact
       tags:
       - Contacts
-      summary: Create a contact
-      description: Creates a new contact with an email address, an optional subscription state, and arbitrary metadata used for personalization and segmentation.
-      security:
-      - bearerAuth: []
+      summary: Create or update contact
+      description: Create a new contact or update existing (upsert by email)
+      operationId: createContact
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateContactRequest'
+              type: object
+              required:
+              - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                subscribed:
+                  type: boolean
+                  default: true
+                data:
+                  type: object
+                  additionalProperties: true
             example:
               email: user@example.com
               subscribed: true
               data:
                 firstName: John
-                plan: pro
+                lastName: Doe
+                plan: premium
       responses:
         '200':
-          description: The created contact.
+          description: Contact updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Contact'
+                allOf:
+                - $ref: '#/components/schemas/Contact'
+                - type: object
+                  properties:
+                    _meta:
+                      type: object
+                      properties:
+                        isNew:
+                          type: boolean
+                        isUpdate:
+                          type: boolean
+        '201':
+          description: Contact created
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Contact'
+                - type: object
+                  properties:
+                    _meta:
+                      type: object
+                      properties:
+                        isNew:
+                          type: boolean
+                        isUpdate:
+                          type: boolean
+        '400':
+          description: '`email` was not supplied.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyError'
+              example:
+                error: Email is required
         '401':
           $ref: '#/components/responses/Unauthorized'
-        '422':
-          $ref: '#/components/responses/ValidationError'
+      security:
+      - ApiKeyAuth: []
     put:
       operationId: updateContact
       tags:
@@ -94,11 +167,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Contact'
+                $ref: '#/components/schemas/Contact_2'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized_2'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: '#/components/responses/NotFound_2'
     delete:
       operationId: deleteContact
       tags:
@@ -127,30 +200,30 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Contact'
+                $ref: '#/components/schemas/Contact_2'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized_2'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: '#/components/responses/NotFound_2'
+    servers:
+    - url: https://next-api.useplunk.com
+      description: Production server
   /contacts/{id}:
     get:
-      operationId: getContact
       tags:
       - Contacts
-      summary: Get a contact
-      description: Retrieves a single contact by its id.
-      security:
-      - bearerAuth: []
+      summary: Get contact
+      description: Get a single contact by ID
+      operationId: getContact
       parameters:
       - name: id
         in: path
         required: true
         schema:
           type: string
-        description: The id of the contact.
       responses:
         '200':
-          description: The requested contact.
+          description: Contact details
           content:
             application/json:
               schema:
@@ -159,6 +232,81 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+      security:
+      - ApiKeyAuth: []
+    patch:
+      tags:
+      - Contacts
+      summary: Update contact
+      description: Update an existing contact's email, subscription state, or `data` fields.
+      operationId: updateContact
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Change the contact's email address. Returns 409 if another contact in the project already uses this email.
+                subscribed:
+                  type: boolean
+                  description: Update subscription state. Flipping this fires `contact.subscribed` or `contact.unsubscribed`.
+                data:
+                  type: object
+                  additionalProperties: true
+                  description: Patch contact data. `null` deletes a key, empty strings are ignored, primitives are stored. Reserved keys are silently filtered out.
+      responses:
+        '200':
+          description: Contact updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: An existing contact already uses the email you're trying to set.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+      - ApiKeyAuth: []
+    delete:
+      tags:
+      - Contacts
+      summary: Delete contact
+      description: Permanently delete a contact
+      operationId: deleteContact
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '204':
+          description: Contact deleted successfully (no content returned)
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+      - ApiKeyAuth: []
+    servers:
+    - url: https://next-api.useplunk.com
+      description: Production server
   /contacts/count:
     get:
       operationId: getContactCount
@@ -180,7 +328,10 @@ paths:
                     type: integer
                     example: 4096
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized_2'
+    servers:
+    - url: https://api.useplunk.com/v1
+      description: Plunk hosted API
   /contacts/subscribe:
     post:
       operationId: subscribeContact
@@ -204,11 +355,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Contact'
+                $ref: '#/components/schemas/Contact_2'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized_2'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: '#/components/responses/NotFound_2'
+    servers:
+    - url: https://api.useplunk.com/v1
+      description: Plunk hosted API
   /contacts/unsubscribe:
     post:
       operationId: unsubscribeContact
@@ -232,35 +386,119 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Contact'
+                $ref: '#/components/schemas/Contact_2'
         '401':
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized_2'
         '404':
-          $ref: '#/components/responses/NotFound'
+          $ref: '#/components/responses/NotFound_2'
+    servers:
+    - url: https://api.useplunk.com/v1
+      description: Plunk hosted API
 components:
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+      description: Pagination cursor. Pass the `cursor` returned by the previous page.
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Maximum items per page. Values above 100 are clamped to 100.
+    SortDirection:
+      name: dir
+      in: query
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+        default: desc
+      description: Sort direction. Unrecognised values fall back to the default.
   schemas:
-    ContactSubscriptionRequest:
+    Contact:
       type: object
-      required:
-      - id
       properties:
         id:
           type: string
-          description: The id of the contact.
+          description: Unique contact identifier
+        email:
+          type: string
+          format: email
+          description: Contact email address
+        subscribed:
+          type: boolean
+          description: Subscription status
+        data:
+          type: object
+          description: Custom contact data fields
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    FieldError:
+      type: object
+      properties:
+        field:
+          type: string
+          description: Dot-path of the offending field, e.g. `attachments.0.filename`.
+        message:
+          type: string
+        code:
+          type: string
+          description: Validation issue code, e.g. `invalid_type`, `too_big`, `reserved_event`.
+        received:
+          description: The value that was received, when available.
+    LegacyError:
+      type: object
+      description: Flat error shape returned by the hand-validated create/update endpoints (`POST /contacts`, `POST /templates`, `POST /segments`) for missing required fields. Unlike the rest of the API these return `400` with a bare `error` string rather than the standard envelope. Errors raised deeper in those same endpoints (404, 409, domain verification) still use the standard `Error` envelope.
+      properties:
+        error:
+          type: string
     Error:
       type: object
       properties:
         success:
           type: boolean
-          example: false
-        code:
-          type: integer
+          enum:
+          - false
         error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code, e.g. `VALIDATION_ERROR`, `INVALID_API_KEY`, `IDEMPOTENCY_KEY_REUSED`.
+            message:
+              type: string
+            statusCode:
+              type: integer
+            requestId:
+              type: string
+              description: Correlation ID for this request. Include it when contacting support.
+            errors:
+              type: array
+              items:
+                $ref: '#/components/schemas/FieldError'
+              description: Field-level detail, present on validation failures.
+            details:
+              type: object
+              additionalProperties: true
+              description: Additional error context.
+            suggestion:
+              type: string
+              description: Hint for fixing the request.
+        timestamp:
           type: string
-        message:
-          type: string
-        time:
-          type: integer
+          format: date-time
     UpdateContactRequest:
       type: object
       required:
@@ -290,7 +528,7 @@ components:
         data:
           type: object
           additionalProperties: true
-    Contact:
+    Contact_2:
       type: object
       properties:
         id:
@@ -309,27 +547,87 @@ components:
         updatedAt:
           type: string
           format: date-time
+    ContactSubscriptionRequest:
+      type: object
+      required:
+      - id
+      properties:
+        id:
+          type: string
+          description: The id of the contact.
+    Error_2:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        time:
+          type: integer
   responses:
-    ValidationError:
-      description: The request body failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     Unauthorized:
       description: Missing or invalid API key.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: INVALID_API_KEY
+              message: Invalid secret API key. This endpoint requires a secret key (sk_*), not a public key.
+              statusCode: 401
+              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
+            timestamp: '2025-01-15T10:30:00.000Z'
     NotFound:
-      description: The requested resource was not found.
+      description: The requested resource does not exist in this project.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    Unauthorized_2:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error_2'
+    NotFound_2:
+      description: The requested resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error_2'
+    ValidationError:
+      description: The request body failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error_2'
   securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
+      description: 'API Key authentication. The project is automatically derived from the key.
+
+
+        **`/v1/track` requires a public key (`pk_*`)** — it is the one endpoint intended for client-side use, and a secret key is rejected there with `401`.
+
+
+        **Every other endpoint requires a secret key (`sk_*`)** and rejects public keys with `401`.
+
+
+        So the two key types are not interchangeable in either direction: pick the key that matches the endpoint you are calling.'
     bearerAuth:
       type: http
       scheme: bearer
       description: Plunk API key passed as a Bearer token. Use a secret key (sk_) for most endpoints; the /track endpoint additionally accepts a public key (pk_).
+x-refined-from:
+- plunk-api-openapi.json
+- plunk-openapi.yml
+x-ext-urls: {}

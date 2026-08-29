@@ -175,6 +175,36 @@ apis:
     url: https://docs.useplunk.com/api-reference/contacts/create
   - type: Documentation
     url: https://docs.useplunk.com/api-reference/campaigns/create
+- aid: plunk:plunk-public-api-api
+  name: Plunk Public API
+  description: Public API endpoints for sending emails and tracking events
+  humanURL: https://docs.useplunk.com/api-reference/transactional/send
+  baseURL: https://api.useplunk.com/v1
+  tags:
+  - Public API
+  properties:
+  - type: OpenAPI
+    url: openapi/plunk-public-api-api-openapi.yml
+- aid: plunk:plunk-segments-api
+  name: Plunk Segments API
+  description: Audience segmentation
+  humanURL: https://docs.useplunk.com/api-reference/transactional/send
+  baseURL: https://api.useplunk.com/v1
+  tags:
+  - Segments
+  properties:
+  - type: OpenAPI
+    url: openapi/plunk-segments-api-openapi.yml
+- aid: plunk:plunk-templates-api
+  name: Plunk Templates API
+  description: Email template management
+  humanURL: https://docs.useplunk.com/api-reference/transactional/send
+  baseURL: https://api.useplunk.com/v1
+  tags:
+  - Templates
+  properties:
+  - type: OpenAPI
+    url: openapi/plunk-templates-api-openapi.yml
 common:
 - type: AgenticAccess
   url: agentic-access/plunk-agentic-access.yml

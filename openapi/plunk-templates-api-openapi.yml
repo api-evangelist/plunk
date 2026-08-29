@@ -1,0 +1,322 @@
+openapi: 3.2.0
+info:
+  title: Plunk Templates API
+  description: Open-source email platform API for transactional emails, campaigns, and marketing automation
+  version: 1.0.0
+  contact:
+    name: Plunk Support
+    url: https://www.useplunk.com
+servers:
+- url: https://next-api.useplunk.com
+  description: Production server
+security:
+- ApiKeyAuth: []
+tags:
+- name: Templates
+  description: Email template management
+paths:
+  /templates:
+    get:
+      tags:
+      - Templates
+      summary: List templates
+      description: 'Get a paginated list of email templates.
+
+
+        This endpoint uses **offset pagination** (`page` / `pageSize`), not the cursor pagination used by `GET /contacts`.'
+      operationId: listTemplates
+      parameters:
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/PageSize'
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - TRANSACTIONAL
+          - MARKETING
+          - HEADLESS
+        description: Filter by template type.
+      - name: search
+        in: query
+        schema:
+          type: string
+        description: Case-insensitive match on name, description, or subject.
+      - name: sort
+        in: query
+        schema:
+          type: string
+          enum:
+          - name
+          - createdAt
+          - updatedAt
+          default: createdAt
+        description: Column to sort by. Unrecognised values fall back to `createdAt`.
+      - $ref: '#/components/parameters/SortDirection'
+      responses:
+        '200':
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Template'
+                  total:
+                    type: integer
+                    description: Total templates matching the filters, across all pages.
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+                  totalPages:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+      - Templates
+      summary: Create template
+      description: 'Create a new email template.
+
+
+        `from` is required and its domain must already be verified for this project, otherwise the request is rejected.'
+      operationId: createTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              - subject
+              - body
+              - from
+              properties:
+                name:
+                  type: string
+                  description: Internal name for the template.
+                description:
+                  type: string
+                  description: Optional internal note. Not sent to recipients.
+                subject:
+                  type: string
+                body:
+                  type: string
+                  description: HTML body. Use `{{variable}}` placeholders to interpolate contact data at send time.
+                from:
+                  type: string
+                  format: email
+                  description: Sender address. Must belong to a domain verified for this project.
+                fromName:
+                  type: string
+                  description: Sender display name.
+                replyTo:
+                  type: string
+                  format: email
+                type:
+                  type: string
+                  enum:
+                  - TRANSACTIONAL
+                  - MARKETING
+                  - HEADLESS
+                  default: MARKETING
+                  description: Optional. Defaults to `MARKETING` when omitted.
+            example:
+              name: Password reset
+              subject: Reset your password
+              body: '<h1>Hi {{firstName}}</h1><p>Use this code: {{resetCode}}</p>'
+              from: hello@example.com
+              fromName: My App
+              type: TRANSACTIONAL
+      responses:
+        '201':
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+        '400':
+          description: A required field (`name`, `subject`, `body`, `from`) is missing.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyError'
+              example:
+                error: From address is required
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/UnverifiedDomain'
+components:
+  responses:
+    UnverifiedDomain:
+      description: The sender domain is not registered to this project, or has not completed DNS verification. Add and verify the domain in your project settings first.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: INTERNAL_SERVER_ERROR
+              message: Domain "example.com" is not verified. Please complete the DNS verification process in your domain settings.
+              statusCode: 403
+              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
+            timestamp: '2025-01-15T10:30:00.000Z'
+    Unauthorized:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: INVALID_API_KEY
+              message: Invalid secret API key. This endpoint requires a secret key (sk_*), not a public key.
+              statusCode: 401
+              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
+            timestamp: '2025-01-15T10:30:00.000Z'
+  schemas:
+    Template:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        subject:
+          type: string
+        body:
+          type: string
+          description: HTML content with `{{variable}}` placeholders.
+        from:
+          type: string
+          format: email
+          description: Sender address. Must belong to a verified domain.
+        fromName:
+          type: string
+          nullable: true
+        replyTo:
+          type: string
+          format: email
+          nullable: true
+        type:
+          type: string
+          enum:
+          - TRANSACTIONAL
+          - MARKETING
+          - HEADLESS
+        projectId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    FieldError:
+      type: object
+      properties:
+        field:
+          type: string
+          description: Dot-path of the offending field, e.g. `attachments.0.filename`.
+        message:
+          type: string
+        code:
+          type: string
+          description: Validation issue code, e.g. `invalid_type`, `too_big`, `reserved_event`.
+        received:
+          description: The value that was received, when available.
+    LegacyError:
+      type: object
+      description: Flat error shape returned by the hand-validated create/update endpoints (`POST /contacts`, `POST /templates`, `POST /segments`) for missing required fields. Unlike the rest of the API these return `400` with a bare `error` string rather than the standard envelope. Errors raised deeper in those same endpoints (404, 409, domain verification) still use the standard `Error` envelope.
+      properties:
+        error:
+          type: string
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum:
+          - false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code, e.g. `VALIDATION_ERROR`, `INVALID_API_KEY`, `IDEMPOTENCY_KEY_REUSED`.
+            message:
+              type: string
+            statusCode:
+              type: integer
+            requestId:
+              type: string
+              description: Correlation ID for this request. Include it when contacting support.
+            errors:
+              type: array
+              items:
+                $ref: '#/components/schemas/FieldError'
+              description: Field-level detail, present on validation failures.
+            details:
+              type: object
+              additionalProperties: true
+              description: Additional error context.
+            suggestion:
+              type: string
+              description: Hint for fixing the request.
+        timestamp:
+          type: string
+          format: date-time
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: 1-based page number.
+    PageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 20
+      description: Items per page.
+    SortDirection:
+      name: dir
+      in: query
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+        default: desc
+      description: Sort direction. Unrecognised values fall back to the default.
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
+      description: 'API Key authentication. The project is automatically derived from the key.
+
+
+        **`/v1/track` requires a public key (`pk_*`)** — it is the one endpoint intended for client-side use, and a secret key is rejected there with `401`.
+
+
+        **Every other endpoint requires a secret key (`sk_*`)** and rejects public keys with `401`.
+
+
+        So the two key types are not interchangeable in either direction: pick the key that matches the endpoint you are calling.'
+x-ext-urls: {}

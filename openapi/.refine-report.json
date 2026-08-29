@@ -1,20 +1,32 @@
 {
   "provider": "plunk",
   "sources": [
-    "plunk-campaigns-api-openapi.yml",
-    "plunk-contacts-api-openapi.yml",
-    "plunk-events-api-openapi.yml",
-    "plunk-transactional-api-openapi.yml"
+    "_original/plunk-api-openapi.json",
+    "_original/plunk-openapi.yml"
   ],
   "outputs": [
     "plunk-campaigns-api-openapi.yml",
     "plunk-contacts-api-openapi.yml",
+    "plunk-public-api-api-openapi.yml",
+    "plunk-segments-api-openapi.yml",
+    "plunk-templates-api-openapi.yml",
     "plunk-events-api-openapi.yml",
     "plunk-transactional-api-openapi.yml"
   ],
   "archived": [],
   "errors": [],
   "warnings": [],
-  "notes": [],
-  "skipped": []
+  "notes": [
+    "sourced from openapi/_original/ (2 archived document(s)); previously refined output at the top level was skipped rather than re-split",
+    "plunk-api-openapi.json: upgraded openapi 3.1.0 -> OpenAPI 3.2.0",
+    "plunk-openapi.yml: upgraded openapi 3.0.1 -> OpenAPI 3.2.0",
+    "tag 'Campaigns' spans 2 source specs (plunk-api-openapi.json, plunk-openapi.yml): per-path servers applied",
+    "tag 'Contacts' spans 2 source specs (plunk-api-openapi.json, plunk-openapi.yml): per-path servers applied"
+  ],
+  "skipped": [
+    "plunk-campaigns-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "plunk-contacts-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "plunk-events-api-openapi.yml: previously refined output, superseded by openapi/_original/",
+    "plunk-transactional-api-openapi.yml: previously refined output, superseded by openapi/_original/"
+  ]
 }

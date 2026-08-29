@@ -1,0 +1,338 @@
+openapi: 3.2.0
+info:
+  title: Plunk Segments API
+  description: Open-source email platform API for transactional emails, campaigns, and marketing automation
+  version: 1.0.0
+  contact:
+    name: Plunk Support
+    url: https://www.useplunk.com
+servers:
+- url: https://next-api.useplunk.com
+  description: Production server
+security:
+- ApiKeyAuth: []
+tags:
+- name: Segments
+  description: Audience segmentation
+paths:
+  /segments:
+    get:
+      tags:
+      - Segments
+      summary: List segments
+      description: Get all audience segments for the project, newest first. This endpoint is not paginated — it returns a bare array of every segment.
+      operationId: listSegments
+      responses:
+        '200':
+          description: List of segments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Segment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags:
+      - Segments
+      summary: Create segment
+      description: 'Create a new audience segment.
+
+
+        **`DYNAMIC` segments** (the default) are defined by a `condition` — a boolean tree that is re-evaluated against your contacts, so membership changes on its own as contact data changes. `condition` is required for these.
+
+
+        **`STATIC` segments** hold a manually managed member list; `condition` is ignored. Add members with `POST /segments/{id}/members`.'
+      operationId: createSegment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                description:
+                  type: string
+                  maxLength: 500
+                type:
+                  type: string
+                  enum:
+                  - DYNAMIC
+                  - STATIC
+                  default: DYNAMIC
+                  description: Defaults to `DYNAMIC` when omitted.
+                condition:
+                  allOf:
+                  - $ref: '#/components/schemas/FilterCondition'
+                  description: Required for `DYNAMIC` segments; ignored for `STATIC` ones.
+                trackMembership:
+                  type: boolean
+                  default: false
+                  description: Emit `segment.<slug>.entry` / `segment.<slug>.exit` events as contacts join and leave. These can be used as workflow triggers.
+            examples:
+              simple:
+                summary: Premium users
+                value:
+                  name: Premium Users
+                  condition:
+                    logic: AND
+                    groups:
+                    - filters:
+                      - field: data.plan
+                        operator: equals
+                        value: premium
+                  trackMembership: true
+              orLogic:
+                summary: Either of two groups (OR)
+                description: Filters inside a group are ANDed; `logic` combines the groups. This matches premium users OR anyone who signed up in the last 7 days.
+                value:
+                  name: Premium or new
+                  description: Targets for the onboarding push
+                  condition:
+                    logic: OR
+                    groups:
+                    - filters:
+                      - field: data.plan
+                        operator: equals
+                        value: premium
+                      - field: subscribed
+                        operator: equals
+                        value: true
+                    - filters:
+                      - field: createdAt
+                        operator: within
+                        value: 7
+                        unit: days
+              eventBased:
+                summary: Based on a tracked event
+                description: Contacts who triggered `purchase` in the last 30 days.
+                value:
+                  name: Recent purchasers
+                  condition:
+                    logic: AND
+                    groups:
+                    - filters:
+                      - field: purchase
+                        operator: triggeredWithin
+                        value: 30
+                        unit: days
+              static:
+                summary: Static segment
+                value:
+                  name: Beta testers
+                  type: STATIC
+      responses:
+        '201':
+          description: Segment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Segment'
+        '400':
+          description: '`name` is missing, or `condition` is missing on a `DYNAMIC` segment.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyError'
+              example:
+                error: Condition is required and must be an object for DYNAMIC segments
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+components:
+  schemas:
+    FilterGroup:
+      type: object
+      required:
+      - filters
+      properties:
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Filter'
+          description: Filters within a group are combined with AND.
+        conditions:
+          $ref: '#/components/schemas/FilterCondition'
+          description: Optional nested condition, allowing arbitrarily deep AND/OR trees.
+    FilterCondition:
+      type: object
+      required:
+      - logic
+      - groups
+      description: A boolean tree over contact filters. `logic` combines the `groups`; the filters inside each group are always ANDed together.
+      properties:
+        logic:
+          type: string
+          enum:
+          - AND
+          - OR
+        groups:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/FilterGroup'
+    FieldError:
+      type: object
+      properties:
+        field:
+          type: string
+          description: Dot-path of the offending field, e.g. `attachments.0.filename`.
+        message:
+          type: string
+        code:
+          type: string
+          description: Validation issue code, e.g. `invalid_type`, `too_big`, `reserved_event`.
+        received:
+          description: The value that was received, when available.
+    Filter:
+      type: object
+      required:
+      - field
+      - operator
+      properties:
+        field:
+          type: string
+          description: Contact field to test. Custom fields are addressed via the `data.` prefix (e.g. `data.plan`); standard fields are `email`, `subscribed`, `createdAt`. Event operators take an event name instead.
+        operator:
+          type: string
+          enum:
+          - equals
+          - notEquals
+          - contains
+          - notContains
+          - greaterThan
+          - lessThan
+          - greaterThanOrEqual
+          - lessThanOrEqual
+          - exists
+          - notExists
+          - within
+          - olderThan
+          - triggered
+          - triggeredWithin
+          - triggeredOlderThan
+          - notTriggered
+          - notTriggeredWithin
+          - memberOfSegment
+          - notMemberOfSegment
+        value:
+          description: Comparison value. Omitted for `exists` / `notExists` / `triggered` / `notTriggered`. For time-window operators this is the number of `unit`s.
+        unit:
+          type: string
+          enum:
+          - days
+          - hours
+          - minutes
+          description: Time unit for window operators (`within`, `olderThan`, `triggeredWithin`, `triggeredOlderThan`, `notTriggeredWithin`).
+    Segment:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        type:
+          type: string
+          enum:
+          - DYNAMIC
+          - STATIC
+          description: '`DYNAMIC` segments are evaluated from `condition`. `STATIC` segments hold a manually managed member list.'
+        condition:
+          allOf:
+          - $ref: '#/components/schemas/FilterCondition'
+          nullable: true
+          description: Filter condition for `DYNAMIC` segments. Null for `STATIC` segments.
+        trackMembership:
+          type: boolean
+          description: When true, contacts entering or leaving the segment emit `segment.<slug>.entry` / `segment.<slug>.exit` events.
+        memberCount:
+          type: integer
+          description: Cached member count, refreshed by a background job rather than computed per request.
+        projectId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    LegacyError:
+      type: object
+      description: Flat error shape returned by the hand-validated create/update endpoints (`POST /contacts`, `POST /templates`, `POST /segments`) for missing required fields. Unlike the rest of the API these return `400` with a bare `error` string rather than the standard envelope. Errors raised deeper in those same endpoints (404, 409, domain verification) still use the standard `Error` envelope.
+      properties:
+        error:
+          type: string
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum:
+          - false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code, e.g. `VALIDATION_ERROR`, `INVALID_API_KEY`, `IDEMPOTENCY_KEY_REUSED`.
+            message:
+              type: string
+            statusCode:
+              type: integer
+            requestId:
+              type: string
+              description: Correlation ID for this request. Include it when contacting support.
+            errors:
+              type: array
+              items:
+                $ref: '#/components/schemas/FieldError'
+              description: Field-level detail, present on validation failures.
+            details:
+              type: object
+              additionalProperties: true
+              description: Additional error context.
+            suggestion:
+              type: string
+              description: Hint for fixing the request.
+        timestamp:
+          type: string
+          format: date-time
+  responses:
+    Unauthorized:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: INVALID_API_KEY
+              message: Invalid secret API key. This endpoint requires a secret key (sk_*), not a public key.
+              statusCode: 401
+              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
+            timestamp: '2025-01-15T10:30:00.000Z'
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Key
+      description: 'API Key authentication. The project is automatically derived from the key.
+
+
+        **`/v1/track` requires a public key (`pk_*`)** — it is the one endpoint intended for client-side use, and a secret key is rejected there with `401`.
+
+
+        **Every other endpoint requires a secret key (`sk_*`)** and rejects public keys with `401`.
+
+
+        So the two key types are not interchangeable in either direction: pick the key that matches the endpoint you are calling.'
+x-ext-urls: {}
