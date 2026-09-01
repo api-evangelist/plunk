@@ -206,6 +206,9 @@ apis:
   - type: OpenAPI
     url: openapi/plunk-templates-api-openapi.yml
 common:
+- type: License
+  name: AGPL-3.0
+  url: https://github.com/useplunk/plunk/blob/next/LICENSE
 - type: AgenticAccess
   url: agentic-access/plunk-agentic-access.yml
 - type: DomainSecurity
