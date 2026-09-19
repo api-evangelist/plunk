@@ -181,6 +181,8 @@ apis:
   humanURL: https://docs.useplunk.com/api-reference/transactional/send
   baseURL: https://api.useplunk.com/v1
   tags:
+  - Public APIs
+  tags_raw:
   - Public API
   properties:
   - type: OpenAPI
