@@ -395,33 +395,52 @@ paths:
     - url: https://api.useplunk.com/v1
       description: Plunk hosted API
 components:
-  parameters:
-    Cursor:
-      name: cursor
-      in: query
-      schema:
-        type: string
-      description: Pagination cursor. Pass the `cursor` returned by the previous page.
-    Limit:
-      name: limit
-      in: query
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 100
-        default: 20
-      description: Maximum items per page. Values above 100 are clamped to 100.
-    SortDirection:
-      name: dir
-      in: query
-      schema:
-        type: string
-        enum:
-        - asc
-        - desc
-        default: desc
-      description: Sort direction. Unrecognised values fall back to the default.
+  responses:
+    NotFound:
+      description: The requested resource does not exist in this project.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: INVALID_API_KEY
+              message: Invalid secret API key. This endpoint requires a secret key (sk_*), not a public key.
+              statusCode: 401
+              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
+            timestamp: '2025-01-15T10:30:00.000Z'
+    NotFound_2:
+      description: The requested resource was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error_2'
+    ValidationError:
+      description: The request body failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error_2'
+    Unauthorized_2:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error_2'
   schemas:
+    LegacyError:
+      type: object
+      description: Flat error shape returned by the hand-validated create/update endpoints (`POST /contacts`, `POST /templates`, `POST /segments`) for missing required fields. Unlike the rest of the API these return `400` with a bare `error` string rather than the standard envelope. Errors raised deeper in those same endpoints (404, 409, domain verification) still use the standard `Error` envelope.
+      properties:
+        error:
+          type: string
     Contact:
       type: object
       properties:
@@ -458,12 +477,6 @@ components:
           description: Validation issue code, e.g. `invalid_type`, `too_big`, `reserved_event`.
         received:
           description: The value that was received, when available.
-    LegacyError:
-      type: object
-      description: Flat error shape returned by the hand-validated create/update endpoints (`POST /contacts`, `POST /templates`, `POST /segments`) for missing required fields. Unlike the rest of the API these return `400` with a bare `error` string rather than the standard envelope. Errors raised deeper in those same endpoints (404, 409, domain verification) still use the standard `Error` envelope.
-      properties:
-        error:
-          type: string
     Error:
       type: object
       properties:
@@ -499,54 +512,6 @@ components:
         timestamp:
           type: string
           format: date-time
-    UpdateContactRequest:
-      type: object
-      required:
-      - id
-      properties:
-        id:
-          type: string
-        email:
-          type: string
-          format: email
-        subscribed:
-          type: boolean
-        data:
-          type: object
-          additionalProperties: true
-    CreateContactRequest:
-      type: object
-      required:
-      - email
-      properties:
-        email:
-          type: string
-          format: email
-        subscribed:
-          type: boolean
-          default: true
-        data:
-          type: object
-          additionalProperties: true
-    Contact_2:
-      type: object
-      properties:
-        id:
-          type: string
-        email:
-          type: string
-          format: email
-        subscribed:
-          type: boolean
-        data:
-          type: object
-          additionalProperties: true
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
     ContactSubscriptionRequest:
       type: object
       required:
@@ -569,45 +534,80 @@ components:
           type: string
         time:
           type: integer
-  responses:
-    Unauthorized:
-      description: Missing or invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            success: false
-            error:
-              code: INVALID_API_KEY
-              message: Invalid secret API key. This endpoint requires a secret key (sk_*), not a public key.
-              statusCode: 401
-              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
-            timestamp: '2025-01-15T10:30:00.000Z'
-    NotFound:
-      description: The requested resource does not exist in this project.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized_2:
-      description: Missing or invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error_2'
-    NotFound_2:
-      description: The requested resource was not found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error_2'
-    ValidationError:
-      description: The request body failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error_2'
+    Contact_2:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        subscribed:
+          type: boolean
+        data:
+          type: object
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateContactRequest:
+      type: object
+      required:
+      - email
+      properties:
+        email:
+          type: string
+          format: email
+        subscribed:
+          type: boolean
+          default: true
+        data:
+          type: object
+          additionalProperties: true
+    UpdateContactRequest:
+      type: object
+      required:
+      - id
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        subscribed:
+          type: boolean
+        data:
+          type: object
+          additionalProperties: true
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+      description: Pagination cursor. Pass the `cursor` returned by the previous page.
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Maximum items per page. Values above 100 are clamped to 100.
+    SortDirection:
+      name: dir
+      in: query
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+        default: desc
+      description: Sort direction. Unrecognised values fall back to the default.
   securitySchemes:
     ApiKeyAuth:
       type: http

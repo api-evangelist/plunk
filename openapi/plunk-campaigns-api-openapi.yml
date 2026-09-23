@@ -389,35 +389,34 @@ paths:
     - url: https://api.useplunk.com/v1
       description: Plunk hosted API
 components:
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: 1-based page number.
+    PageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 20
+      description: Items per page.
+    SortDirection:
+      name: dir
+      in: query
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+        default: desc
+      description: Sort direction. Unrecognised values fall back to the default.
   responses:
-    UnverifiedDomain:
-      description: The sender domain is not registered to this project, or has not completed DNS verification. Add and verify the domain in your project settings first.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            success: false
-            error:
-              code: INTERNAL_SERVER_ERROR
-              message: Domain "example.com" is not verified. Please complete the DNS verification process in your domain settings.
-              statusCode: 403
-              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
-            timestamp: '2025-01-15T10:30:00.000Z'
-    Unauthorized:
-      description: Missing or invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            success: false
-            error:
-              code: INVALID_API_KEY
-              message: Invalid secret API key. This endpoint requires a secret key (sk_*), not a public key.
-              statusCode: 401
-              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
-            timestamp: '2025-01-15T10:30:00.000Z'
     NotFound:
       description: The requested resource does not exist in this project.
       content:
@@ -443,12 +442,34 @@ components:
                 code: invalid_string
               suggestion: Please check the API documentation for the correct request format.
             timestamp: '2025-01-15T10:30:00.000Z'
-    Unauthorized_2:
+    Unauthorized:
       description: Missing or invalid API key.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error_2'
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: INVALID_API_KEY
+              message: Invalid secret API key. This endpoint requires a secret key (sk_*), not a public key.
+              statusCode: 401
+              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
+            timestamp: '2025-01-15T10:30:00.000Z'
+    UnverifiedDomain:
+      description: The sender domain is not registered to this project, or has not completed DNS verification. Add and verify the domain in your project settings first.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: INTERNAL_SERVER_ERROR
+              message: Domain "example.com" is not verified. Please complete the DNS verification process in your domain settings.
+              statusCode: 403
+              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
+            timestamp: '2025-01-15T10:30:00.000Z'
     NotFound_2:
       description: The requested resource was not found.
       content:
@@ -461,7 +482,53 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error_2'
+    Unauthorized_2:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error_2'
   schemas:
+    Filter:
+      type: object
+      required:
+      - field
+      - operator
+      properties:
+        field:
+          type: string
+          description: Contact field to test. Custom fields are addressed via the `data.` prefix (e.g. `data.plan`); standard fields are `email`, `subscribed`, `createdAt`. Event operators take an event name instead.
+        operator:
+          type: string
+          enum:
+          - equals
+          - notEquals
+          - contains
+          - notContains
+          - greaterThan
+          - lessThan
+          - greaterThanOrEqual
+          - lessThanOrEqual
+          - exists
+          - notExists
+          - within
+          - olderThan
+          - triggered
+          - triggeredWithin
+          - triggeredOlderThan
+          - notTriggered
+          - notTriggeredWithin
+          - memberOfSegment
+          - notMemberOfSegment
+        value:
+          description: Comparison value. Omitted for `exists` / `notExists` / `triggered` / `notTriggered`. For time-window operators this is the number of `unit`s.
+        unit:
+          type: string
+          enum:
+          - days
+          - hours
+          - minutes
+          description: Time unit for window operators (`within`, `olderThan`, `triggeredWithin`, `triggeredOlderThan`, `notTriggeredWithin`).
     FilterGroup:
       type: object
       required:
@@ -475,6 +542,71 @@ components:
         conditions:
           $ref: '#/components/schemas/FilterCondition'
           description: Optional nested condition, allowing arbitrarily deep AND/OR trees.
+    FilterCondition:
+      type: object
+      required:
+      - logic
+      - groups
+      description: A boolean tree over contact filters. `logic` combines the `groups`; the filters inside each group are always ANDed together.
+      properties:
+        logic:
+          type: string
+          enum:
+          - AND
+          - OR
+        groups:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/FilterGroup'
+    FieldError:
+      type: object
+      properties:
+        field:
+          type: string
+          description: Dot-path of the offending field, e.g. `attachments.0.filename`.
+        message:
+          type: string
+        code:
+          type: string
+          description: Validation issue code, e.g. `invalid_type`, `too_big`, `reserved_event`.
+        received:
+          description: The value that was received, when available.
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum:
+          - false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code, e.g. `VALIDATION_ERROR`, `INVALID_API_KEY`, `IDEMPOTENCY_KEY_REUSED`.
+            message:
+              type: string
+            statusCode:
+              type: integer
+            requestId:
+              type: string
+              description: Correlation ID for this request. Include it when contacting support.
+            errors:
+              type: array
+              items:
+                $ref: '#/components/schemas/FieldError'
+              description: Field-level detail, present on validation failures.
+            details:
+              type: object
+              additionalProperties: true
+              description: Additional error context.
+            suggestion:
+              type: string
+              description: Hint for fixing the request.
+        timestamp:
+          type: string
+          format: date-time
     Campaign:
       type: object
       properties:
@@ -558,111 +690,52 @@ components:
         updatedAt:
           type: string
           format: date-time
-    FilterCondition:
+    SendCampaignRequest:
       type: object
       required:
-      - logic
-      - groups
-      description: A boolean tree over contact filters. `logic` combines the `groups`; the filters inside each group are always ANDed together.
+      - id
       properties:
-        logic:
+        id:
           type: string
-          enum:
-          - AND
-          - OR
-        groups:
+          description: The id of the campaign to send.
+        live:
+          type: boolean
+          description: When true the campaign is sent for real; when false a test send is performed.
+        delay:
+          type: integer
+          description: Optional delay in minutes before sending.
+    UpdateCampaignRequest:
+      type: object
+      required:
+      - id
+      properties:
+        id:
+          type: string
+        subject:
+          type: string
+        body:
+          type: string
+        recipients:
           type: array
-          minItems: 1
           items:
-            $ref: '#/components/schemas/FilterGroup'
-    FieldError:
-      type: object
-      properties:
-        field:
+            type: string
+            format: email
+        style:
           type: string
-          description: Dot-path of the offending field, e.g. `attachments.0.filename`.
-        message:
-          type: string
-        code:
-          type: string
-          description: Validation issue code, e.g. `invalid_type`, `too_big`, `reserved_event`.
-        received:
-          description: The value that was received, when available.
-    Filter:
-      type: object
-      required:
-      - field
-      - operator
-      properties:
-        field:
-          type: string
-          description: Contact field to test. Custom fields are addressed via the `data.` prefix (e.g. `data.plan`); standard fields are `email`, `subscribed`, `createdAt`. Event operators take an event name instead.
-        operator:
-          type: string
-          enum:
-          - equals
-          - notEquals
-          - contains
-          - notContains
-          - greaterThan
-          - lessThan
-          - greaterThanOrEqual
-          - lessThanOrEqual
-          - exists
-          - notExists
-          - within
-          - olderThan
-          - triggered
-          - triggeredWithin
-          - triggeredOlderThan
-          - notTriggered
-          - notTriggeredWithin
-          - memberOfSegment
-          - notMemberOfSegment
-        value:
-          description: Comparison value. Omitted for `exists` / `notExists` / `triggered` / `notTriggered`. For time-window operators this is the number of `unit`s.
-        unit:
-          type: string
-          enum:
-          - days
-          - hours
-          - minutes
-          description: Time unit for window operators (`within`, `olderThan`, `triggeredWithin`, `triggeredOlderThan`, `notTriggeredWithin`).
-    Error:
+    Error_2:
       type: object
       properties:
         success:
           type: boolean
-          enum:
-          - false
+          example: false
+        code:
+          type: integer
         error:
-          type: object
-          properties:
-            code:
-              type: string
-              description: Machine-readable error code, e.g. `VALIDATION_ERROR`, `INVALID_API_KEY`, `IDEMPOTENCY_KEY_REUSED`.
-            message:
-              type: string
-            statusCode:
-              type: integer
-            requestId:
-              type: string
-              description: Correlation ID for this request. Include it when contacting support.
-            errors:
-              type: array
-              items:
-                $ref: '#/components/schemas/FieldError'
-              description: Field-level detail, present on validation failures.
-            details:
-              type: object
-              additionalProperties: true
-              description: Additional error context.
-            suggestion:
-              type: string
-              description: Hint for fixing the request.
-        timestamp:
           type: string
-          format: date-time
+        message:
+          type: string
+        time:
+          type: integer
     CreateCampaignRequest:
       type: object
       required:
@@ -713,79 +786,6 @@ components:
         updatedAt:
           type: string
           format: date-time
-    SendCampaignRequest:
-      type: object
-      required:
-      - id
-      properties:
-        id:
-          type: string
-          description: The id of the campaign to send.
-        live:
-          type: boolean
-          description: When true the campaign is sent for real; when false a test send is performed.
-        delay:
-          type: integer
-          description: Optional delay in minutes before sending.
-    UpdateCampaignRequest:
-      type: object
-      required:
-      - id
-      properties:
-        id:
-          type: string
-        subject:
-          type: string
-        body:
-          type: string
-        recipients:
-          type: array
-          items:
-            type: string
-            format: email
-        style:
-          type: string
-    Error_2:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: false
-        code:
-          type: integer
-        error:
-          type: string
-        message:
-          type: string
-        time:
-          type: integer
-  parameters:
-    Page:
-      name: page
-      in: query
-      schema:
-        type: integer
-        minimum: 1
-        default: 1
-      description: 1-based page number.
-    PageSize:
-      name: pageSize
-      in: query
-      schema:
-        type: integer
-        minimum: 1
-        default: 20
-      description: Items per page.
-    SortDirection:
-      name: dir
-      in: query
-      schema:
-        type: string
-        enum:
-        - asc
-        - desc
-        default: desc
-      description: Sort direction. Unrecognised values fall back to the default.
   securitySchemes:
     ApiKeyAuth:
       type: http

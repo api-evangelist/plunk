@@ -318,7 +318,7 @@ paths:
       description: 'Track an event for a contact. Automatically creates or upserts the contact, then records the event. Tracked events can be used as workflow triggers, segment filters, and audience filters.
 
 
-        **Reserved event names** (rejected with `VALIDATION_ERROR` and code `reserved_event`): anything matching `email.*`, `contact.subscribed`, `contact.unsubscribed`, `segment.<slug>.entry`, `segment.<slug>.exit`. These are emitted by Plunk itself.
+        **Reserved event names** (rejected with `VALIDATION_ERROR` and code `reserved_event`): anything matching `email.*`, `contact.subscribed`, `contact.unsubscribed`, `segment..entry`, `segment..exit`. These are emitted by Plunk itself.
 
 
         **Idempotency**: re-tracking the same event creates a new event record. Send an `Idempotency-Key` header to have a repeated request refused with `409` instead.'
@@ -543,20 +543,6 @@ paths:
           $ref: '#/components/responses/ValidationError'
 components:
   responses:
-    Unauthorized:
-      description: Missing or invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            success: false
-            error:
-              code: INVALID_API_KEY
-              message: Invalid secret API key. This endpoint requires a secret key (sk_*), not a public key.
-              statusCode: 401
-              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
-            timestamp: '2025-01-15T10:30:00.000Z'
     IdempotencyConflict:
       description: Idempotency-Key already used. The request was refused, not performed.
       content:
@@ -596,6 +582,29 @@ components:
                 code: invalid_string
               suggestion: Please check the API documentation for the correct request format.
             timestamp: '2025-01-15T10:30:00.000Z'
+    Unauthorized:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: INVALID_API_KEY
+              message: Invalid secret API key. This endpoint requires a secret key (sk_*), not a public key.
+              statusCode: 401
+              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
+            timestamp: '2025-01-15T10:30:00.000Z'
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+        maxLength: 255
+      description: Optional key that guarantees this request runs at most once. If the key was already used by your project, the request is refused with `409` instead of being performed a second time. Keys are scoped to your project, expire after 24 hours (configurable when self-hosting), and must be 1-255 printable ASCII characters.
   schemas:
     FieldError:
       type: object
@@ -645,15 +654,6 @@ components:
         timestamp:
           type: string
           format: date-time
-  parameters:
-    IdempotencyKey:
-      name: Idempotency-Key
-      in: header
-      required: false
-      schema:
-        type: string
-        maxLength: 255
-      description: Optional key that guarantees this request runs at most once. If the key was already used by your project, the request is refused with `409` instead of being performed a second time. Keys are scoped to your project, expire after 24 hours (configurable when self-hosting), and must be 1-255 printable ASCII characters.
   securitySchemes:
     ApiKeyAuth:
       type: http

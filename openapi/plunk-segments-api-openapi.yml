@@ -146,89 +146,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
 components:
   schemas:
-    FilterGroup:
-      type: object
-      required:
-      - filters
-      properties:
-        filters:
-          type: array
-          items:
-            $ref: '#/components/schemas/Filter'
-          description: Filters within a group are combined with AND.
-        conditions:
-          $ref: '#/components/schemas/FilterCondition'
-          description: Optional nested condition, allowing arbitrarily deep AND/OR trees.
-    FilterCondition:
-      type: object
-      required:
-      - logic
-      - groups
-      description: A boolean tree over contact filters. `logic` combines the `groups`; the filters inside each group are always ANDed together.
-      properties:
-        logic:
-          type: string
-          enum:
-          - AND
-          - OR
-        groups:
-          type: array
-          minItems: 1
-          items:
-            $ref: '#/components/schemas/FilterGroup'
-    FieldError:
-      type: object
-      properties:
-        field:
-          type: string
-          description: Dot-path of the offending field, e.g. `attachments.0.filename`.
-        message:
-          type: string
-        code:
-          type: string
-          description: Validation issue code, e.g. `invalid_type`, `too_big`, `reserved_event`.
-        received:
-          description: The value that was received, when available.
-    Filter:
-      type: object
-      required:
-      - field
-      - operator
-      properties:
-        field:
-          type: string
-          description: Contact field to test. Custom fields are addressed via the `data.` prefix (e.g. `data.plan`); standard fields are `email`, `subscribed`, `createdAt`. Event operators take an event name instead.
-        operator:
-          type: string
-          enum:
-          - equals
-          - notEquals
-          - contains
-          - notContains
-          - greaterThan
-          - lessThan
-          - greaterThanOrEqual
-          - lessThanOrEqual
-          - exists
-          - notExists
-          - within
-          - olderThan
-          - triggered
-          - triggeredWithin
-          - triggeredOlderThan
-          - notTriggered
-          - notTriggeredWithin
-          - memberOfSegment
-          - notMemberOfSegment
-        value:
-          description: Comparison value. Omitted for `exists` / `notExists` / `triggered` / `notTriggered`. For time-window operators this is the number of `unit`s.
-        unit:
-          type: string
-          enum:
-          - days
-          - hours
-          - minutes
-          description: Time unit for window operators (`within`, `olderThan`, `triggeredWithin`, `triggeredOlderThan`, `notTriggeredWithin`).
     Segment:
       type: object
       properties:
@@ -270,6 +187,76 @@ components:
       properties:
         error:
           type: string
+    Filter:
+      type: object
+      required:
+      - field
+      - operator
+      properties:
+        field:
+          type: string
+          description: Contact field to test. Custom fields are addressed via the `data.` prefix (e.g. `data.plan`); standard fields are `email`, `subscribed`, `createdAt`. Event operators take an event name instead.
+        operator:
+          type: string
+          enum:
+          - equals
+          - notEquals
+          - contains
+          - notContains
+          - greaterThan
+          - lessThan
+          - greaterThanOrEqual
+          - lessThanOrEqual
+          - exists
+          - notExists
+          - within
+          - olderThan
+          - triggered
+          - triggeredWithin
+          - triggeredOlderThan
+          - notTriggered
+          - notTriggeredWithin
+          - memberOfSegment
+          - notMemberOfSegment
+        value:
+          description: Comparison value. Omitted for `exists` / `notExists` / `triggered` / `notTriggered`. For time-window operators this is the number of `unit`s.
+        unit:
+          type: string
+          enum:
+          - days
+          - hours
+          - minutes
+          description: Time unit for window operators (`within`, `olderThan`, `triggeredWithin`, `triggeredOlderThan`, `notTriggeredWithin`).
+    FilterCondition:
+      type: object
+      required:
+      - logic
+      - groups
+      description: A boolean tree over contact filters. `logic` combines the `groups`; the filters inside each group are always ANDed together.
+      properties:
+        logic:
+          type: string
+          enum:
+          - AND
+          - OR
+        groups:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/FilterGroup'
+    FieldError:
+      type: object
+      properties:
+        field:
+          type: string
+          description: Dot-path of the offending field, e.g. `attachments.0.filename`.
+        message:
+          type: string
+        code:
+          type: string
+          description: Validation issue code, e.g. `invalid_type`, `too_big`, `reserved_event`.
+        received:
+          description: The value that was received, when available.
     Error:
       type: object
       properties:
@@ -305,6 +292,19 @@ components:
         timestamp:
           type: string
           format: date-time
+    FilterGroup:
+      type: object
+      required:
+      - filters
+      properties:
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Filter'
+          description: Filters within a group are combined with AND.
+        conditions:
+          $ref: '#/components/schemas/FilterCondition'
+          description: Optional nested condition, allowing arbitrarily deep AND/OR trees.
   responses:
     Unauthorized:
       description: Missing or invalid API key.

@@ -1,0 +1,29 @@
+# Front Door AI Index — plunk — 2026-09-17
+# AI vocabulary counted on the provider's root page. Generated; do not edit.
+# `score` is null unless ownership is `own` — see front_door_ai.py.
+front_door_ai:
+  slug: plunk
+  lexicon_version: '1.0'
+  probed_at: '2026-09-17'
+  host: www.useplunk.com
+  final_host: www.useplunk.com
+  ownership: own
+  owner: plunk
+  shares_host_with: null
+  inherited_from: null
+  verdict: scored
+  score: 6
+  host_score: 6
+  density: 6.82
+  words: 880
+  tiers:
+    agentic: 3
+    core: 0
+    model: 3
+  ambiguous: 6
+  top_terms:
+    Claude: 3
+    agent: 3
+    automation: 3
+    MCP: 2
+    model context protocol: 1
