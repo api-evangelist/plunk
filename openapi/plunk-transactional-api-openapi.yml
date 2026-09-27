@@ -52,7 +52,62 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
 components:
+  responses:
+    RateLimited:
+      description: Too many requests; the project rate limit was exceeded.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ValidationError:
+      description: The request body failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
+    SendEmailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        emails:
+          type: array
+          items:
+            type: object
+            properties:
+              contact:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  email:
+                    type: string
+              email:
+                type: string
+        timestamp:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        time:
+          type: integer
     SendEmailRequest:
       type: object
       required:
@@ -108,61 +163,6 @@ components:
               type:
                 type: string
                 description: MIME type of the attachment.
-    Error:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: false
-        code:
-          type: integer
-        error:
-          type: string
-        message:
-          type: string
-        time:
-          type: integer
-    SendEmailResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        emails:
-          type: array
-          items:
-            type: object
-            properties:
-              contact:
-                type: object
-                properties:
-                  id:
-                    type: string
-                  email:
-                    type: string
-              email:
-                type: string
-        timestamp:
-          type: string
-          format: date-time
-  responses:
-    RateLimited:
-      description: Too many requests; the project rate limit was exceeded.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    ValidationError:
-      description: The request body failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Missing or invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
   securitySchemes:
     bearerAuth:
       type: http

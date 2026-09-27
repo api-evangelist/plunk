@@ -44,12 +44,12 @@ tags:
 - Transactional Email
 - Marketing
 - Automation
-- Open-Source
+- Open Source
 - Software-as-a-Service
 - Email API
 - Webhook
 - Segmentation
-- Workflow-Automation
+- Workflow Automation
 - Self-Hosted
 - Developer Tools
 tags_raw:
@@ -65,6 +65,8 @@ tags_raw:
 - Workflow Automation
 - Self-Hosted
 - Developer Tools
+- Open-Source
+- Workflow-Automation
 created: '2026-06-20'
 modified: '2026-08-13'
 specificationVersion: '0.23'

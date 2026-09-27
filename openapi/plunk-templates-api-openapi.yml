@@ -154,14 +154,6 @@ paths:
           $ref: '#/components/responses/UnverifiedDomain'
 components:
   parameters:
-    Page:
-      name: page
-      in: query
-      schema:
-        type: integer
-        minimum: 1
-        default: 1
-      description: 1-based page number.
     PageSize:
       name: pageSize
       in: query
@@ -170,6 +162,14 @@ components:
         minimum: 1
         default: 20
       description: Items per page.
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: 1-based page number.
     SortDirection:
       name: dir
       in: query
@@ -181,25 +181,6 @@ components:
         default: desc
       description: Sort direction. Unrecognised values fall back to the default.
   schemas:
-    LegacyError:
-      type: object
-      description: Flat error shape returned by the hand-validated create/update endpoints (`POST /contacts`, `POST /templates`, `POST /segments`) for missing required fields. Unlike the rest of the API these return `400` with a bare `error` string rather than the standard envelope. Errors raised deeper in those same endpoints (404, 409, domain verification) still use the standard `Error` envelope.
-      properties:
-        error:
-          type: string
-    FieldError:
-      type: object
-      properties:
-        field:
-          type: string
-          description: Dot-path of the offending field, e.g. `attachments.0.filename`.
-        message:
-          type: string
-        code:
-          type: string
-          description: Validation issue code, e.g. `invalid_type`, `too_big`, `reserved_event`.
-        received:
-          description: The value that was received, when available.
     Template:
       type: object
       properties:
@@ -240,6 +221,19 @@ components:
         updatedAt:
           type: string
           format: date-time
+    FieldError:
+      type: object
+      properties:
+        field:
+          type: string
+          description: Dot-path of the offending field, e.g. `attachments.0.filename`.
+        message:
+          type: string
+        code:
+          type: string
+          description: Validation issue code, e.g. `invalid_type`, `too_big`, `reserved_event`.
+        received:
+          description: The value that was received, when available.
     Error:
       type: object
       properties:
@@ -275,6 +269,12 @@ components:
         timestamp:
           type: string
           format: date-time
+    LegacyError:
+      type: object
+      description: Flat error shape returned by the hand-validated create/update endpoints (`POST /contacts`, `POST /templates`, `POST /segments`) for missing required fields. Unlike the rest of the API these return `400` with a bare `error` string rather than the standard envelope. Errors raised deeper in those same endpoints (404, 409, domain verification) still use the standard `Error` envelope.
+      properties:
+        error:
+          type: string
   responses:
     Unauthorized:
       description: Missing or invalid API key.

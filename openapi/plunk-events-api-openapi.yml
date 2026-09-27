@@ -54,21 +54,26 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
 components:
+  responses:
+    RateLimited:
+      description: Too many requests; the project rate limit was exceeded.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ValidationError:
+      description: The request body failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
-    TrackEventResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        contact:
-          type: string
-          description: The id of the contact.
-        event:
-          type: string
-          description: The id of the recorded event.
-        timestamp:
-          type: string
-          format: date-time
     TrackEventRequest:
       type: object
       required:
@@ -103,25 +108,20 @@ components:
           type: string
         time:
           type: integer
-  responses:
-    ValidationError:
-      description: The request body failed validation.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    RateLimited:
-      description: Too many requests; the project rate limit was exceeded.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Missing or invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+    TrackEventResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        contact:
+          type: string
+          description: The id of the contact.
+        event:
+          type: string
+          description: The id of the recorded event.
+        timestamp:
+          type: string
+          format: date-time
   securitySchemes:
     bearerAuth:
       type: http
