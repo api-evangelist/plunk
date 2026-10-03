@@ -146,59 +146,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
 components:
   schemas:
-    Filter:
-      type: object
-      required:
-      - field
-      - operator
-      properties:
-        field:
-          type: string
-          description: Contact field to test. Custom fields are addressed via the `data.` prefix (e.g. `data.plan`); standard fields are `email`, `subscribed`, `createdAt`. Event operators take an event name instead.
-        operator:
-          type: string
-          enum:
-          - equals
-          - notEquals
-          - contains
-          - notContains
-          - greaterThan
-          - lessThan
-          - greaterThanOrEqual
-          - lessThanOrEqual
-          - exists
-          - notExists
-          - within
-          - olderThan
-          - triggered
-          - triggeredWithin
-          - triggeredOlderThan
-          - notTriggered
-          - notTriggeredWithin
-          - memberOfSegment
-          - notMemberOfSegment
-        value:
-          description: Comparison value. Omitted for `exists` / `notExists` / `triggered` / `notTriggered`. For time-window operators this is the number of `unit`s.
-        unit:
-          type: string
-          enum:
-          - days
-          - hours
-          - minutes
-          description: Time unit for window operators (`within`, `olderThan`, `triggeredWithin`, `triggeredOlderThan`, `notTriggeredWithin`).
-    FieldError:
-      type: object
-      properties:
-        field:
-          type: string
-          description: Dot-path of the offending field, e.g. `attachments.0.filename`.
-        message:
-          type: string
-        code:
-          type: string
-          description: Validation issue code, e.g. `invalid_type`, `too_big`, `reserved_event`.
-        received:
-          description: The value that was received, when available.
     FilterGroup:
       type: object
       required:
@@ -282,6 +229,65 @@ components:
         updatedAt:
           type: string
           format: date-time
+    LegacyError:
+      type: object
+      description: Flat error shape returned by the hand-validated create/update endpoints (`POST /contacts`, `POST /templates`, `POST /segments`) for missing required fields. Unlike the rest of the API these return `400` with a bare `error` string rather than the standard envelope. Errors raised deeper in those same endpoints (404, 409, domain verification) still use the standard `Error` envelope.
+      properties:
+        error:
+          type: string
+    Filter:
+      type: object
+      required:
+      - field
+      - operator
+      properties:
+        field:
+          type: string
+          description: Contact field to test. Custom fields are addressed via the `data.` prefix (e.g. `data.plan`); standard fields are `email`, `subscribed`, `createdAt`. Event operators take an event name instead.
+        operator:
+          type: string
+          enum:
+          - equals
+          - notEquals
+          - contains
+          - notContains
+          - greaterThan
+          - lessThan
+          - greaterThanOrEqual
+          - lessThanOrEqual
+          - exists
+          - notExists
+          - within
+          - olderThan
+          - triggered
+          - triggeredWithin
+          - triggeredOlderThan
+          - notTriggered
+          - notTriggeredWithin
+          - memberOfSegment
+          - notMemberOfSegment
+        value:
+          description: Comparison value. Omitted for `exists` / `notExists` / `triggered` / `notTriggered`. For time-window operators this is the number of `unit`s.
+        unit:
+          type: string
+          enum:
+          - days
+          - hours
+          - minutes
+          description: Time unit for window operators (`within`, `olderThan`, `triggeredWithin`, `triggeredOlderThan`, `notTriggeredWithin`).
+    FieldError:
+      type: object
+      properties:
+        field:
+          type: string
+          description: Dot-path of the offending field, e.g. `attachments.0.filename`.
+        message:
+          type: string
+        code:
+          type: string
+          description: Validation issue code, e.g. `invalid_type`, `too_big`, `reserved_event`.
+        received:
+          description: The value that was received, when available.
     FilterCondition:
       type: object
       required:
@@ -299,12 +305,6 @@ components:
           minItems: 1
           items:
             $ref: '#/components/schemas/FilterGroup'
-    LegacyError:
-      type: object
-      description: Flat error shape returned by the hand-validated create/update endpoints (`POST /contacts`, `POST /templates`, `POST /segments`) for missing required fields. Unlike the rest of the API these return `400` with a bare `error` string rather than the standard envelope. Errors raised deeper in those same endpoints (404, 409, domain verification) still use the standard `Error` envelope.
-      properties:
-        error:
-          type: string
   responses:
     Unauthorized:
       description: Missing or invalid API key.

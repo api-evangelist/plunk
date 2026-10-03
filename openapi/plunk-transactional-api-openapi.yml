@@ -59,14 +59,14 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Missing or invalid API key.
+    ValidationError:
+      description: The request body failed validation.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    ValidationError:
-      description: The request body failed validation.
+    Unauthorized:
+      description: Missing or invalid API key.
       content:
         application/json:
           schema:

@@ -61,39 +61,19 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Missing or invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     ValidationError:
       description: The request body failed validation.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
-    TrackEventRequest:
-      type: object
-      required:
-      - event
-      - email
-      properties:
-        event:
-          type: string
-          description: The name of the event (e.g. "signed-up").
-        email:
-          type: string
-          format: email
-          description: The contact's email address.
-        subscribed:
-          type: boolean
-          description: Sets the subscription state of the contact.
-        data:
-          type: object
-          additionalProperties: true
-          description: Arbitrary metadata stored on the contact.
     Error:
       type: object
       properties:
@@ -122,6 +102,26 @@ components:
         timestamp:
           type: string
           format: date-time
+    TrackEventRequest:
+      type: object
+      required:
+      - event
+      - email
+      properties:
+        event:
+          type: string
+          description: The name of the event (e.g. "signed-up").
+        email:
+          type: string
+          format: email
+          description: The contact's email address.
+        subscribed:
+          type: boolean
+          description: Sets the subscription state of the contact.
+        data:
+          type: object
+          additionalProperties: true
+          description: Arbitrary metadata stored on the contact.
   securitySchemes:
     bearerAuth:
       type: http
