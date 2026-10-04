@@ -210,6 +210,9 @@ apis:
   - type: OpenAPI
     url: openapi/plunk-templates-api-openapi.yml
 common:
+- type: CapabilityMap
+  url: capabilities/plunk-capability-edges.yml
+  name: Plunk Business Capability Map
 - type: License
   name: AGPL-3.0
   url: https://github.com/useplunk/plunk/blob/next/LICENSE
