@@ -153,69 +153,49 @@ paths:
         '403':
           $ref: '#/components/responses/UnverifiedDomain'
 components:
-  parameters:
-    SortDirection:
-      name: dir
-      in: query
-      schema:
-        type: string
-        enum:
-        - asc
-        - desc
-        default: desc
-      description: Sort direction. Unrecognised values fall back to the default.
-    Page:
-      name: page
-      in: query
-      schema:
-        type: integer
-        minimum: 1
-        default: 1
-      description: 1-based page number.
-    PageSize:
-      name: pageSize
-      in: query
-      schema:
-        type: integer
-        minimum: 1
-        default: 20
-      description: Items per page.
+  responses:
+    UnverifiedDomain:
+      description: The sender domain is not registered to this project, or has not completed DNS verification. Add and verify the domain in your project settings first.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: INTERNAL_SERVER_ERROR
+              message: Domain "example.com" is not verified. Please complete the DNS verification process in your domain settings.
+              statusCode: 403
+              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
+            timestamp: '2025-01-15T10:30:00.000Z'
+    Unauthorized:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error:
+              code: INVALID_API_KEY
+              message: Invalid secret API key. This endpoint requires a secret key (sk_*), not a public key.
+              statusCode: 401
+              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
+            timestamp: '2025-01-15T10:30:00.000Z'
   schemas:
-    Error:
+    FieldError:
       type: object
       properties:
-        success:
-          type: boolean
-          enum:
-          - false
-        error:
-          type: object
-          properties:
-            code:
-              type: string
-              description: Machine-readable error code, e.g. `VALIDATION_ERROR`, `INVALID_API_KEY`, `IDEMPOTENCY_KEY_REUSED`.
-            message:
-              type: string
-            statusCode:
-              type: integer
-            requestId:
-              type: string
-              description: Correlation ID for this request. Include it when contacting support.
-            errors:
-              type: array
-              items:
-                $ref: '#/components/schemas/FieldError'
-              description: Field-level detail, present on validation failures.
-            details:
-              type: object
-              additionalProperties: true
-              description: Additional error context.
-            suggestion:
-              type: string
-              description: Hint for fixing the request.
-        timestamp:
+        field:
           type: string
-          format: date-time
+          description: Dot-path of the offending field, e.g. `attachments.0.filename`.
+        message:
+          type: string
+        code:
+          type: string
+          description: Validation issue code, e.g. `invalid_type`, `too_big`, `reserved_event`.
+        received:
+          description: The value that was received, when available.
     Template:
       type: object
       properties:
@@ -256,54 +236,74 @@ components:
         updatedAt:
           type: string
           format: date-time
-    FieldError:
+    Error:
       type: object
       properties:
-        field:
+        success:
+          type: boolean
+          enum:
+          - false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code, e.g. `VALIDATION_ERROR`, `INVALID_API_KEY`, `IDEMPOTENCY_KEY_REUSED`.
+            message:
+              type: string
+            statusCode:
+              type: integer
+            requestId:
+              type: string
+              description: Correlation ID for this request. Include it when contacting support.
+            errors:
+              type: array
+              items:
+                $ref: '#/components/schemas/FieldError'
+              description: Field-level detail, present on validation failures.
+            details:
+              type: object
+              additionalProperties: true
+              description: Additional error context.
+            suggestion:
+              type: string
+              description: Hint for fixing the request.
+        timestamp:
           type: string
-          description: Dot-path of the offending field, e.g. `attachments.0.filename`.
-        message:
-          type: string
-        code:
-          type: string
-          description: Validation issue code, e.g. `invalid_type`, `too_big`, `reserved_event`.
-        received:
-          description: The value that was received, when available.
+          format: date-time
     LegacyError:
       type: object
       description: Flat error shape returned by the hand-validated create/update endpoints (`POST /contacts`, `POST /templates`, `POST /segments`) for missing required fields. Unlike the rest of the API these return `400` with a bare `error` string rather than the standard envelope. Errors raised deeper in those same endpoints (404, 409, domain verification) still use the standard `Error` envelope.
       properties:
         error:
           type: string
-  responses:
-    UnverifiedDomain:
-      description: The sender domain is not registered to this project, or has not completed DNS verification. Add and verify the domain in your project settings first.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            success: false
-            error:
-              code: INTERNAL_SERVER_ERROR
-              message: Domain "example.com" is not verified. Please complete the DNS verification process in your domain settings.
-              statusCode: 403
-              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
-            timestamp: '2025-01-15T10:30:00.000Z'
-    Unauthorized:
-      description: Missing or invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-          example:
-            success: false
-            error:
-              code: INVALID_API_KEY
-              message: Invalid secret API key. This endpoint requires a secret key (sk_*), not a public key.
-              statusCode: 401
-              requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
-            timestamp: '2025-01-15T10:30:00.000Z'
+  parameters:
+    SortDirection:
+      name: dir
+      in: query
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+        default: desc
+      description: Sort direction. Unrecognised values fall back to the default.
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: 1-based page number.
+    PageSize:
+      name: pageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 20
+      description: Items per page.
   securitySchemes:
     ApiKeyAuth:
       type: http

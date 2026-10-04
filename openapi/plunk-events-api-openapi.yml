@@ -55,8 +55,8 @@ paths:
           $ref: '#/components/responses/RateLimited'
 components:
   responses:
-    RateLimited:
-      description: Too many requests; the project rate limit was exceeded.
+    Unauthorized:
+      description: Missing or invalid API key.
       content:
         application/json:
           schema:
@@ -67,27 +67,13 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    Unauthorized:
-      description: Missing or invalid API key.
+    RateLimited:
+      description: Too many requests; the project rate limit was exceeded.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
-    Error:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: false
-        code:
-          type: integer
-        error:
-          type: string
-        message:
-          type: string
-        time:
-          type: integer
     TrackEventResponse:
       type: object
       properties:
@@ -122,6 +108,20 @@ components:
           type: object
           additionalProperties: true
           description: Arbitrary metadata stored on the contact.
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        code:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        time:
+          type: integer
   securitySchemes:
     bearerAuth:
       type: http

@@ -591,18 +591,9 @@ components:
         timestamp:
           type: string
           format: date-time
-  parameters:
-    IdempotencyKey:
-      name: Idempotency-Key
-      in: header
-      required: false
-      schema:
-        type: string
-        maxLength: 255
-      description: Optional key that guarantees this request runs at most once. If the key was already used by your project, the request is refused with `409` instead of being performed a second time. Keys are scoped to your project, expire after 24 hours (configurable when self-hosting), and must be 1-255 printable ASCII characters.
   responses:
-    ValidationError:
-      description: Request body failed schema validation. `error.errors` lists the offending fields.
+    Unauthorized:
+      description: Missing or invalid API key.
       content:
         application/json:
           schema:
@@ -610,15 +601,10 @@ components:
           example:
             success: false
             error:
-              code: VALIDATION_ERROR
-              message: Request validation failed
-              statusCode: 422
+              code: INVALID_API_KEY
+              message: Invalid secret API key. This endpoint requires a secret key (sk_*), not a public key.
+              statusCode: 401
               requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
-              errors:
-              - field: to
-                message: Invalid email
-                code: invalid_string
-              suggestion: Please check the API documentation for the correct request format.
             timestamp: '2025-01-15T10:30:00.000Z'
     IdempotencyConflict:
       description: Idempotency-Key already used. The request was refused, not performed.
@@ -640,8 +626,8 @@ components:
                 originalStatusCode: 200
               suggestion: This Idempotency-Key was already used, so the request was refused rather than performed twice. Generate a new key for a genuinely new request.
             timestamp: '2025-01-15T10:31:00.000Z'
-    Unauthorized:
-      description: Missing or invalid API key.
+    ValidationError:
+      description: Request body failed schema validation. `error.errors` lists the offending fields.
       content:
         application/json:
           schema:
@@ -649,11 +635,25 @@ components:
           example:
             success: false
             error:
-              code: INVALID_API_KEY
-              message: Invalid secret API key. This endpoint requires a secret key (sk_*), not a public key.
-              statusCode: 401
+              code: VALIDATION_ERROR
+              message: Request validation failed
+              statusCode: 422
               requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
+              errors:
+              - field: to
+                message: Invalid email
+                code: invalid_string
+              suggestion: Please check the API documentation for the correct request format.
             timestamp: '2025-01-15T10:30:00.000Z'
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+        maxLength: 255
+      description: Optional key that guarantees this request runs at most once. If the key was already used by your project, the request is refused with `409` instead of being performed a second time. Keys are scoped to your project, expire after 24 hours (configurable when self-hosting), and must be 1-255 printable ASCII characters.
   securitySchemes:
     ApiKeyAuth:
       type: http
