@@ -2,7 +2,7 @@
 name: Create and send a Plunk campaign to a segment
 description: Build an audience segment, create a campaign against it, test it, then send or schedule it — with the confirmation and cost checks a broadcast deserves.
 api: openapi/_original/plunk-api-openapi.json
-operations: [createSegment, listSegments, createTemplate, listTemplates, createCampaign, listCampaigns, sendCampaign]
+operations: [createSegment, listSegments, createTemplate, listTemplates, createCampaign, listCampaigns, postCampaignsSend]
 base_url: https://next-api.useplunk.com
 ---
 

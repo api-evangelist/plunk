@@ -178,3 +178,41 @@ plans:
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
+x-canonical:
+  generated: '2026-10-08'
+  vocabulary: all/0-working/economics/plans-canonical.yml
+  models:
+  - free
+  - metered
+  - seat
+  units:
+  - active-user
+  - message
+  - seat
+  plans:
+  - name: Free Forever
+    access: free
+    model: free
+    model_how: derived
+    units:
+    - active-user
+    - message
+    periods:
+    - month
+  - name: Pay as you grow
+    access: other
+    model: metered
+    model_how: stated
+    units:
+    - active-user
+    - message
+    periods:
+    - month
+  - name: Self-Hosted (Open Source)
+    access: free
+    model: seat
+    model_how: derived
+    units:
+    - seat
+    periods:
+    - month
