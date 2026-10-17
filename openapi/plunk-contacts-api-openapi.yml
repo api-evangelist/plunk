@@ -399,6 +399,32 @@ paths:
     - url: https://api.useplunk.com/v1
       description: Plunk hosted API
 components:
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Maximum items per page. Values above 100 are clamped to 100.
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+      description: Pagination cursor. Pass the `cursor` returned by the previous page.
+    SortDirection:
+      name: dir
+      in: query
+      schema:
+        type: string
+        enum:
+        - asc
+        - desc
+        default: desc
+      description: Sort direction. Unrecognised values fall back to the default.
   schemas:
     FieldError:
       type: object
@@ -413,29 +439,12 @@ components:
           description: Validation issue code, e.g. `invalid_type`, `too_big`, `reserved_event`.
         received:
           description: The value that was received, when available.
-    Contact:
+    LegacyError:
       type: object
+      description: Flat error shape returned by the hand-validated create/update endpoints (`POST /contacts`, `POST /templates`, `POST /segments`) for missing required fields. Unlike the rest of the API these return `400` with a bare `error` string rather than the standard envelope. Errors raised deeper in those same endpoints (404, 409, domain verification) still use the standard `Error` envelope.
       properties:
-        id:
+        error:
           type: string
-          description: Unique contact identifier
-        email:
-          type: string
-          format: email
-          description: Contact email address
-        subscribed:
-          type: boolean
-          description: Subscription status
-        data:
-          type: object
-          description: Custom contact data fields
-          additionalProperties: true
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
     Error:
       type: object
       properties:
@@ -471,12 +480,51 @@ components:
         timestamp:
           type: string
           format: date-time
-    LegacyError:
+    Contact:
       type: object
-      description: Flat error shape returned by the hand-validated create/update endpoints (`POST /contacts`, `POST /templates`, `POST /segments`) for missing required fields. Unlike the rest of the API these return `400` with a bare `error` string rather than the standard envelope. Errors raised deeper in those same endpoints (404, 409, domain verification) still use the standard `Error` envelope.
       properties:
-        error:
+        id:
           type: string
+          description: Unique contact identifier
+        email:
+          type: string
+          format: email
+          description: Contact email address
+        subscribed:
+          type: boolean
+          description: Subscription status
+        data:
+          type: object
+          description: Custom contact data fields
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ContactSubscriptionRequest:
+      type: object
+      required:
+      - id
+      properties:
+        id:
+          type: string
+          description: The id of the contact.
+    CreateContactRequest:
+      type: object
+      required:
+      - email
+      properties:
+        email:
+          type: string
+          format: email
+        subscribed:
+          type: boolean
+          default: true
+        data:
+          type: object
+          additionalProperties: true
     UpdateContactRequest:
       type: object
       required:
@@ -492,20 +540,20 @@ components:
         data:
           type: object
           additionalProperties: true
-    CreateContactRequest:
+    Error_2:
       type: object
-      required:
-      - email
       properties:
-        email:
-          type: string
-          format: email
-        subscribed:
+        success:
           type: boolean
-          default: true
-        data:
-          type: object
-          additionalProperties: true
+          example: false
+        code:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        time:
+          type: integer
     Contact_2:
       type: object
       properties:
@@ -525,29 +573,13 @@ components:
         updatedAt:
           type: string
           format: date-time
-    ContactSubscriptionRequest:
-      type: object
-      required:
-      - id
-      properties:
-        id:
-          type: string
-          description: The id of the contact.
-    Error_2:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: false
-        code:
-          type: integer
-        error:
-          type: string
-        message:
-          type: string
-        time:
-          type: integer
   responses:
+    NotFound:
+      description: The requested resource does not exist in this project.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     Unauthorized:
       description: Missing or invalid API key.
       content:
@@ -562,18 +594,6 @@ components:
               statusCode: 401
               requestId: 8f14e45f-ceea-467a-9575-1f0f38e0b1c2
             timestamp: '2025-01-15T10:30:00.000Z'
-    NotFound:
-      description: The requested resource does not exist in this project.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    Unauthorized_2:
-      description: Missing or invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error_2'
     ValidationError:
       description: The request body failed validation.
       content:
@@ -586,32 +606,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error_2'
-  parameters:
-    SortDirection:
-      name: dir
-      in: query
-      schema:
-        type: string
-        enum:
-        - asc
-        - desc
-        default: desc
-      description: Sort direction. Unrecognised values fall back to the default.
-    Cursor:
-      name: cursor
-      in: query
-      schema:
-        type: string
-      description: Pagination cursor. Pass the `cursor` returned by the previous page.
-    Limit:
-      name: limit
-      in: query
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 100
-        default: 20
-      description: Maximum items per page. Values above 100 are clamped to 100.
+    Unauthorized_2:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error_2'
   securitySchemes:
     ApiKeyAuth:
       type: http

@@ -53,12 +53,6 @@ paths:
           $ref: '#/components/responses/RateLimited'
 components:
   responses:
-    Unauthorized:
-      description: Missing or invalid API key.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     ValidationError:
       description: The request body failed validation.
       content:
@@ -71,7 +65,35 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing or invalid API key.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
+    SendEmailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        emails:
+          type: array
+          items:
+            type: object
+            properties:
+              contact:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  email:
+                    type: string
+              email:
+                type: string
+        timestamp:
+          type: string
+          format: date-time
     SendEmailRequest:
       type: object
       required:
@@ -141,28 +163,6 @@ components:
           type: string
         time:
           type: integer
-    SendEmailResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        emails:
-          type: array
-          items:
-            type: object
-            properties:
-              contact:
-                type: object
-                properties:
-                  id:
-                    type: string
-                  email:
-                    type: string
-              email:
-                type: string
-        timestamp:
-          type: string
-          format: date-time
   securitySchemes:
     bearerAuth:
       type: http
