@@ -1,4 +1,4 @@
-# Plunk (plunk)
+# Plunk
 
 <!-- API-EVANGELIST-PROVENANCE:BEGIN -->
 > ### About this repository
@@ -64,125 +64,162 @@
 > Full detail: **[Where this data comes from](https://apievangelist.com/about/where-our-data-comes-from)**
 <!-- API-EVANGELIST-PROVENANCE:END -->
 
-Plunk is an open-source (AGPL-3.0) email platform for SaaS that unifies transactional email, marketing campaigns, and event-driven automations behind a single REST API. The hosted service runs at api.useplunk.com with Bearer secret / public API keys, and the entire stack can be self-hosted with Docker Compose for full data ownership and no per-email costs.
+Plunk is an open-source (AGPL-3.0) email platform for developers that unifies transactional email, marketing campaigns, contact segmentation and event-driven workflow automation behind a single REST API. It publishes its own OpenAPI 3.1.0 at docs.useplunk.com/openapi.json, declaring next-api.useplunk.com as the production base URL, and authenticates with a two-class Bearer API key where the prefix decides capability — sk_ for every endpoint and pk_ for the client-safe /v1/track tracking call. The API supports Idempotency-Key on both public write endpoints, cursor pagination, a structured error envelope carrying machine codes plus remediation hints, and a documented webhook event catalogue delivered as workflow steps. Every documentation page is also served as Markdown. The entire stack self-hosts with Docker Compose for full data ownership and no per-email costs.
 
-**APIs.json:** [https://raw.githubusercontent.com/api-evangelist/plunk/refs/heads/main/apis.yml](https://raw.githubusercontent.com/api-evangelist/plunk/refs/heads/main/apis.yml)
+**Areas:** Email · Transactional Email · Marketing · Automation · Open Source · Software-as-a-Service · Email API · Webhook · Segmentation · Workflow Automation · Self-Hosted · Developer Tools
 
-## Tags
+## Plunk on APIs.io
 
-- Email
-- Transactional Email
-- Marketing
-- Automation
-- Open Source
-- SaaS
+Everything profiled for Plunk is published on APIs.io rather than in this repository. Start at the provider page — **[apis.io/providers/plunk/](https://apis.io/providers/plunk/)** — or go straight to one of the APIs or properties below.
 
-## Timestamps
+### APIs (7)
 
-- **Created:** 2026-06-20
-- **Modified:** 2026-06-20
+- [Plunk Campaigns API](https://apis.io/apis/plunk/plunk-campaigns-api/) — Create and send marketing campaigns.
+- [Plunk Contacts API](https://apis.io/apis/plunk/plunk-contacts-api/) — Manage contacts and their subscription state.
+- [Plunk Events API](https://apis.io/apis/plunk/plunk-events-api/) — Track contact events that drive automations.
+- [Plunk Transactional API](https://apis.io/apis/plunk/plunk-transactional-api/) — Send transactional email.
+- [Plunk Public API](https://apis.io/apis/plunk/plunk-public-api-api/) — Public API endpoints for sending emails and tracking events
+- [Plunk Segments API](https://apis.io/apis/plunk/plunk-segments-api/) — Audience segmentation
+- [Plunk Templates API](https://apis.io/apis/plunk/plunk-templates-api/) — Email template management
 
-## APIs
+### Published properties
 
-### Plunk Send (Transactional) API
+Each property below is a page on APIs.io carrying the machine-readable artifact and what it says.
 
-Send a single transactional email (HTML or plain-text body) authenticated with a secret API key, with optional sender, reply-to, custom headers, and attachments.
+#### AsyncAPI (1)
 
-- **Human URL:** [https://docs.useplunk.com/api-reference/transactional/send](https://docs.useplunk.com/api-reference/transactional/send)
-- **Base URL:** `https://api.useplunk.com/v1`
+Event-driven and webhook contracts.
 
-#### Tags
+- [Plunk Webhooks](https://apis.io/asyncapis/plunk/plunk-webhooks/)
 
-- Email
-- Transactional
-- Send
+#### MCP servers (1)
 
-#### Properties
+Model Context Protocol servers that expose the API to agents.
 
-- [Documentation](https://docs.useplunk.com/api-reference/transactional/send)
-- [API Reference](https://docs.useplunk.com/api-reference/overview)
-- [OpenAPI](openapi/plunk-openapi.yml) — [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
-- [Postman Collection](collections/plunk.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
-- [Open Collection](collections/plunk.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
-- [GitHub](https://github.com/useplunk/plunk)
+- [plunk-mcp.yml](https://apis.io/servers/plunk/plunk-mcp-yml/)
 
-### Plunk Track (Events) API
+#### Agentic access (1)
 
-Publish a named contact event that creates or updates the contact and triggers any matching automation. Callable with a public (pk_) key for safe client-side tracking, optionally carrying subscription status and metadata.
+Which operations an agent can call, which act, and which need a human in the loop.
 
-- **Human URL:** [https://docs.useplunk.com/api-reference/transactional/track](https://docs.useplunk.com/api-reference/transactional/track)
-- **Base URL:** `https://api.useplunk.com/v1`
+- [Plunk Agentic Access](https://apis.io/agentic-access/plunk/plunk-agentic-access/)
 
-#### Tags
+#### Collections (5)
 
-- Events
-- Tracking
-- Automation
+Postman and Open Collection request collections.
 
-#### Properties
+- [Plunk API](https://apis.io/collections/plunk/open-plunk/)
+- [Plunk Campaigns API](https://apis.io/collections/plunk/open-plunk-campaigns-api/)
+- [Plunk Campaigns Contacts API](https://apis.io/collections/plunk/open-plunk-contacts-api/)
+- [Plunk Campaigns Events API](https://apis.io/collections/plunk/open-plunk-events-api/)
+- [Plunk Campaigns Transactional API](https://apis.io/collections/plunk/open-plunk-transactional-api/)
 
-- [Documentation](https://docs.useplunk.com/api-reference/transactional/track)
-- [API Reference](https://docs.useplunk.com/api-reference/overview)
-- [OpenAPI](openapi/plunk-openapi.yml) — [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
-- [Postman Collection](collections/plunk.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
-- [Open Collection](collections/plunk.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
-- [GitHub](https://github.com/useplunk/plunk)
+#### Overlays (8)
 
-### Plunk Contacts API
+OpenAPI overlays, including conversational phrasing for each operation.
 
-Create, retrieve, update, count, and delete contacts, and manage subscription state with explicit subscribe / unsubscribe operations. Contacts carry arbitrary metadata used for segmentation and personalization.
+- [Plunk Api Overlay](https://apis.io/overlays/plunk/plunk-api-overlay/)
+- [Plunk Campaigns Api Phrasing Overlay](https://apis.io/overlays/plunk/plunk-campaigns-api-phrasing-overlay/)
+- [Plunk Contacts Api Phrasing Overlay](https://apis.io/overlays/plunk/plunk-contacts-api-phrasing-overlay/)
+- [Plunk Events Api Phrasing Overlay](https://apis.io/overlays/plunk/plunk-events-api-phrasing-overlay/)
+- [Plunk Public Api Api Phrasing Overlay](https://apis.io/overlays/plunk/plunk-public-api-api-phrasing-overlay/)
+- [Plunk Segments Api Phrasing Overlay](https://apis.io/overlays/plunk/plunk-segments-api-phrasing-overlay/)
+- [Plunk Templates Api Phrasing Overlay](https://apis.io/overlays/plunk/plunk-templates-api-phrasing-overlay/)
+- [Plunk Transactional Api Phrasing Overlay](https://apis.io/overlays/plunk/plunk-transactional-api-phrasing-overlay/)
 
-- **Human URL:** [https://docs.useplunk.com/api-reference/contacts/create](https://docs.useplunk.com/api-reference/contacts/create)
-- **Base URL:** `https://api.useplunk.com/v1`
+#### Security (2)
 
-#### Tags
+Authentication, trust centre, and vulnerability disclosure.
 
-- Contacts
-- Subscribers
-- Audience
+- [Plunk Authentication](https://apis.io/security/plunk/plunk-authentication/)
+- [Plunk Domain Security](https://apis.io/security/plunk/plunk-domain-security/)
 
-#### Properties
+#### Plans and pricing (1)
 
-- [Documentation](https://docs.useplunk.com/api-reference/contacts/create)
-- [API Reference](https://docs.useplunk.com/api-reference/overview)
-- [OpenAPI](openapi/plunk-openapi.yml) — [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
-- [Postman Collection](collections/plunk.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
-- [Open Collection](collections/plunk.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
-- [GitHub](https://github.com/useplunk/plunk)
+Published plans, tiers and prices.
 
-### Plunk Campaigns API
+- [Plunk Plans Pricing](https://apis.io/plans/plunk/plunk-plans-pricing/)
 
-Create, update, delete, and send one-off marketing campaigns to a list of recipients or audience segments, with HTML body and styling controls.
+#### Rate limits (1)
 
-- **Human URL:** [https://docs.useplunk.com/api-reference/campaigns/create](https://docs.useplunk.com/api-reference/campaigns/create)
-- **Base URL:** `https://api.useplunk.com/v1`
+Published request limits.
 
-#### Tags
+- [Plunk Rate Limits](https://apis.io/rate-limits/plunk/plunk-rate-limits/)
 
-- Campaigns
-- Marketing
-- Broadcast
+#### FinOps (1)
 
-#### Properties
+What the API costs to run, by operation.
 
-- [Documentation](https://docs.useplunk.com/api-reference/campaigns/create)
-- [API Reference](https://docs.useplunk.com/api-reference/overview)
-- [OpenAPI](openapi/plunk-openapi.yml) — [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
-- [Postman Collection](collections/plunk.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
-- [Open Collection](collections/plunk.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
-- [GitHub](https://github.com/useplunk/plunk)
+- [Plunk Finops](https://apis.io/finops/plunk/plunk-finops/)
 
-## Common Properties
+## Where to find this API
 
-- [GitHub Organization](https://github.com/useplunk)
-- [LinkedIn](https://www.linkedin.com/company/useplunk)
+Links to the company's own pages. This repository publishes no copy of their specifications — the canonical document is theirs and lives at the URLs below.
+
 - [Website](https://www.useplunk.com)
 - [Documentation](https://docs.useplunk.com)
-- [Plans](plans/plunk-plans-pricing.yml)
-- [Rate Limits](rate-limits/plunk-rate-limits.yml)
-- [Fin Ops](finops/plunk-finops.yml)
+- [Getting started](https://docs.useplunk.com)
+- [API reference](https://docs.useplunk.com/api-reference/overview)
+- [Pricing](https://www.useplunk.com/pricing)
+- [Sign up](https://next-app.useplunk.com/auth/signup)
+- [Support](https://www.useplunk.com/discord)
+- [Compliance](https://www.useplunk.com/dpa)
+- [Terms of service](https://www.useplunk.com/terms)
+- [Privacy policy](https://www.useplunk.com/privacy)
+- [GitHub](https://github.com/useplunk)
+- [Status](https://status.useplunk.com)
 
-## Maintainers
+## API Evangelist rating
 
-**FN:** Kin Lane
-**Email:** kin@apievangelist.com
+**Kin Score 73.6** — exemplar · rubric 0.25.0 · scored 2026-10-23
+
+| Facet | Score |
+|---|---|
+| Discoverability | 73.2 |
+| Contract quality | 64.2 |
+| Contract governance | 18.2 |
+| Operational transparency | 73.7 |
+| Developer ergonomics | 64.9 |
+| Access clarity | 84.2 |
+
+**Agent readiness 41.7** — agent-native
+
+| Agent-readiness dimension | Result |
+|---|---|
+| Spec Presence | yes |
+| Agentic Access | derived (partial credit) |
+| Reversibility Documented | — |
+| MCP Server | — |
+| Auth Clarity | bearer (partial credit) |
+| Idempotency | verified |
+| Error Semantics | verified |
+| OpenAPI Examples | verified |
+| Rate Limit Signal | documented (partial credit) |
+| Event Surface Described | yes |
+| Agent Skills | derived (partial credit) |
+| Well Known Catalog | — |
+| Consent Identity | — |
+| Agent Card | — |
+| Dry Run Mode | — |
+| Delegated Identity | — |
+| Protected Resource Metadata | — |
+| Dynamic Client Registration | — |
+| Agentic Commerce | — |
+| Pagination Ratio | partial |
+| Operation Distinctiveness | — |
+
+**Regulatory alignment 29.4** — Horizontal (data, software, accessibility, platform)
+
+The rubric is published at [github.com/api-evangelist/kin-score](https://github.com/api-evangelist/kin-score). The per-check breakdown behind these numbers — which checks were earned, partial or missed — along with score history and how this provider compares to its peers, is available at [apis.io/providers/plunk/](https://apis.io/providers/plunk/).
+
+## How this profile is made
+
+API Evangelist profiles a company's public API surface the way a developer would find it: the website, developer portal and documentation, the specifications it publishes, its public repositories, and its pricing, status and changelog pages. From that it derives the properties above — contracts split per API, workflows, schemas, collections, governance rules, plans and rate limits — and scores them against the published [Kin Score rubric](https://github.com/api-evangelist/kin-score).
+
+The artifacts are published on [APIs.io](https://apis.io), not in this repository. This repository is the public record for Plunk: the place to say something is wrong, missing or out of date, and to ask for a re-score or a removal.
+
+## Open an issue
+
+- **Something about this listing** — a wrong description, a missing API, a stale artifact or a question about the rating: [open an issue on this repository](https://github.com/api-evangelist/plunk/issues/new).
+- **A new API, or one that is not in the catalog yet** — [submit it on APIs.io](https://apis.io/add/).
+- **Anything else** — [the APIs.io inbox](https://github.com/api-search/inbox/issues/new) or [info@apievangelist.com](mailto:info@apievangelist.com).
